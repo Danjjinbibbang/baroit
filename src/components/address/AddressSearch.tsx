@@ -21,7 +21,7 @@ interface AddressSearchProps {
 export function AddressSearch({
   onSelectAddress,
   buttonLabel = "주소 검색",
-  className = "",
+  className = "flex w-[30%] border border-black-300 rounded-md",
 }: AddressSearchProps) {
   const [isScriptLoaded, setIsScriptLoaded] = useState(false);
 

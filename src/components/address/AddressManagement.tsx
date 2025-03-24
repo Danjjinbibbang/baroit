@@ -9,7 +9,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { AddressForm } from "./AddressForm";
+import { AddressForm } from "./AddressFormModal";
 import { useAuth } from "@/hooks/useAuth";
 import { apiClient } from "@/lib/api";
 import { API_ENDPOINTS } from "@/lib/constants";

@@ -6,6 +6,7 @@ import { MapPin, Search, Menu, ShoppingBag, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { AddressSearch, AddressData } from "@/components/address/AddressSearch";
 import { CurrentLocation } from "../address/CurrentLocation";
+import AddressListModal from "../address/AddressListModal";
 
 export default function Header() {
   const [isAddressModalOpen, setIsAddressModalOpen] = useState(false);
@@ -25,58 +26,63 @@ export default function Header() {
     // 검색 로직 구현
   };
 
-  const handleLocationDetected = async (location: {
-    lat: number;
-    lng: number;
-  }) => {
-    console.log("현재 위치:", location);
-    setIsLoadingAddress(true);
-    setAddressError(null);
+  // const handleLocationDetected = async (location: {
+  //   lat: number;
+  //   lng: number;
+  // }) => {
+  //   console.log("현재 위치:", location);
+  //   setIsLoadingAddress(true);
+  //   setAddressError(null);
 
-    try {
-      // API 경로를 사용하여 주소 변환 요청
-      const response = await fetch(
-        `/api/address/reverse-geocode?lat=${location.lat}&lng=${location.lng}`
-      );
+  //   try {
+  //     // API 경로를 사용하여 주소 변환 요청
+  //     const response = await fetch(
+  //       `/api/address/reverse-geocode?lat=${location.lat}&lng=${location.lng}`
+  //     );
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || "주소를 가져오는데 실패했습니다.");
-      }
+  //     if (!response.ok) {
+  //       const errorData = await response.json();
+  //       throw new Error(errorData.error || "주소를 가져오는데 실패했습니다.");
+  //     }
 
-      const data = await response.json();
-      console.log("주소 데이터:", data);
+  //     const data = await response.json();
+  //     console.log("주소 데이터:", data);
 
-      // 카카오 API 응답 구조에 맞게 주소 추출
-      if (data.documents && data.documents.length > 0) {
-        const addressInfo = data.documents[0];
+  //     // 카카오 API 응답 구조에 맞게 주소 추출
+  //     if (data.documents && data.documents.length > 0) {
+  //       const addressInfo = data.documents[0];
 
-        let formattedAddress = "";
+  //       let formattedAddress = "";
 
-        // 도로명 주소가 있는 경우 우선 사용
-        if (addressInfo.road_address) {
-          formattedAddress = `${addressInfo.road_address.address_name}`;
-        }
-        // 도로명 주소가 없으면 지번 주소 사용
-        else if (addressInfo.address) {
-          formattedAddress = `${addressInfo.address.address_name}`;
-        }
+  //       // 도로명 주소가 있는 경우 우선 사용
+  //       if (addressInfo.road_address) {
+  //         formattedAddress = `${addressInfo.road_address.address_name}`;
+  //       }
+  //       // 도로명 주소가 없으면 지번 주소 사용
+  //       else if (addressInfo.address) {
+  //         formattedAddress = `${addressInfo.address.address_name}`;
+  //       }
 
-        if (formattedAddress) {
-          setCurrentAddress(formattedAddress);
-          //setIsAddressModalOpen(false);
-        } else {
-          setAddressError("주소를 찾을 수 없습니다.");
-        }
-      } else {
-        setAddressError("주소를 찾을 수 없습니다.");
-      }
-    } catch (error) {
-      console.error("주소 변환 오류:", error);
-      setAddressError("주소를 가져오는데 실패했습니다.");
-    } finally {
-      setIsLoadingAddress(false);
-    }
+  //       if (formattedAddress) {
+  //         setCurrentAddress(formattedAddress);
+  //         //setIsAddressModalOpen(false);
+  //       } else {
+  //         setAddressError("주소를 찾을 수 없습니다.");
+  //       }
+  //     } else {
+  //       setAddressError("주소를 찾을 수 없습니다.");
+  //     }
+  //   } catch (error) {
+  //     console.error("주소 변환 오류:", error);
+  //     setAddressError("주소를 가져오는데 실패했습니다.");
+  //   } finally {
+  //     setIsLoadingAddress(false);
+  //   }
+  // };
+
+  // 주소 아이콘 클릭 핸들러
+  const handleAddressClick = () => {
+    setIsAddressModalOpen(true);
   };
 
   return (
@@ -92,7 +98,7 @@ export default function Header() {
           {/* 현재 위치 */}
           <button
             className="flex items-center text-sm ml-4 hover:text-blue-500"
-            onClick={() => setIsAddressModalOpen(true)}
+            onClick={handleAddressClick}
           >
             <MapPin size={16} className="mr-1" />
             <span className="truncate max-w-[150px]">{currentAddress}</span>
@@ -154,36 +160,11 @@ export default function Header() {
 
       {/* 주소 검색 모달 */}
       {isAddressModalOpen && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center">
-          <div className="bg-white p-6 rounded-lg w-full max-w-md">
-            <h2 className="text-lg font-bold mb-4">배달 받을 주소 설정</h2>
-            <AddressSearch
-              onSelectAddress={handleAddressSelect}
-              buttonLabel="주소 검색하기"
-              className="w-full mb-4"
-            />
-            <CurrentLocation onLocationDetected={handleLocationDetected} />
-            {isLoadingAddress && (
-              <p className="text-sm text-gray-500 mt-2">
-                주소를 가져오는 중...
-              </p>
-            )}
-            {addressError && (
-              <p className="text-sm text-red-500 mt-2">{addressError}</p>
-            )}
-            {currentAddress && (
-              <p className="text-sm text-gray-500 mt-5">{currentAddress}</p>
-            )}
-            <div className="flex justify-end mt-4">
-              <Button
-                variant="outline"
-                onClick={() => setIsAddressModalOpen(false)}
-              >
-                닫기
-              </Button>
-            </div>
-          </div>
-        </div>
+        <AddressListModal
+          isOpen={isAddressModalOpen}
+          onClose={() => setIsAddressModalOpen(false)}
+          customerId={1} // 실제 사용자 ID로 변경 필요
+        />
       )}
     </div>
   );

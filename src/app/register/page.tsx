@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useForm, SubmitHandler } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
+import { registerCustomer } from "@/utils/register";
 
 // 유효성 검사 스키마 정의
 const registerSchema = z.object({
@@ -90,17 +91,20 @@ export default function RegisterPage() {
 
     try {
       // 실제 API 호출 (예시)
-      // const response = await fetch('/api/register', {
-      //   method: 'POST',
-      //   headers: { 'Content-Type': 'application/json' },
-      //   body: JSON.stringify(data)
-      // });
-
-      // 더미 응답
-      console.log("회원가입 데이터:", data);
-      alert("회원가입이 완료되었습니다!");
-      // 로그인 페이지로 리다이렉트
-      window.location.href = "/login";
+      const response = await registerCustomer({
+        loginId: data.userId,
+        name: data.name,
+        email: data.email,
+        password: data.password,
+        tel: data.phone,
+      });
+      if (response.customerId) {
+        console.log("회원가입 데이터:", data);
+        alert("회원가입이 완료되었습니다!");
+        window.location.href = "/login";
+      } else {
+        alert("회원가입 중 오류가 발생했습니다. 다시 시도해주세요.");
+      }
     } catch (error) {
       console.error(
         "회원가입 중 오류 발생:",
