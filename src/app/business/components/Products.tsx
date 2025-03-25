@@ -374,7 +374,6 @@ export default function ProductsPage() {
             상품 등록
           </button>
         </div>
-
         {/* 상품 목록 */}
         <div className="flex-1 overflow-hidden">
           <div className="overflow-x-auto">
