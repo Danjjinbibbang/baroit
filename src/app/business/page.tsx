@@ -12,11 +12,11 @@ import {
 
 // 컴포넌트 import
 import Home from "./components/Home";
-import Products from "./components/Products";
 import Notice from "./components/Notice";
 import Stats from "./components/Stats";
 import Settings_ from "./components/Settings";
 import Management from "./components/Management";
+import ProductsPage from "../../components/manageP/ProductPage";
 
 // 메뉴 데이터
 const menuItems = [
@@ -63,7 +63,7 @@ export default function BusinessPage() {
       case "management":
         return <Management />;
       case "products":
-        return <Products />;
+        return <ProductsPage />;
       case "notice":
         return <Notice />;
       case "stats":

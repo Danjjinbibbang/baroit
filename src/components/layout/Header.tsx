@@ -92,7 +92,7 @@ export default function Header() {
         <div className="flex items-center justify-between py-3">
           {/* 로고 */}
           <Link href="/" className="flex items-center">
-            <span className="text-xl font-bold text-blue-500">바로잇</span>
+            <img className="w-30" src="/baroit.png" />
           </Link>
 
           {/* 현재 위치 */}

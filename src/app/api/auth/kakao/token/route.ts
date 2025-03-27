@@ -78,6 +78,8 @@ export async function POST(req: Request) {
         nickname: userInfo.properties?.nickname || "",
         email: userInfo.kakao_account?.email || "",
         profileImage: userInfo.properties?.profile_image || "",
+        tel: userInfo.kakao_account?.phone_number || "",
+        name: userInfo.kakao_account?.name || "",
       },
     });
   } catch (error) {
