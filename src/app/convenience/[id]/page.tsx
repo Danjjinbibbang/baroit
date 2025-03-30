@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+//import React, { useState } from "react";
 import StoreHeader from "@/components/store/StoreHeader";
 import StoreSearch from "@/components/store/StoreSearch";
 import StoreFeaturedProducts from "@/components/store/StoreFeaturedProducts";
@@ -12,11 +12,11 @@ export default function ConveniencePage({
 }: {
   params: { id: string };
 }) {
-  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  //const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const storeId = params.id;
 
   const handleCategorySelect = (categoryId: string) => {
-    setSelectedCategory(categoryId);
+    //setSelectedCategory(categoryId);
     // 실제 구현에서는 여기서 선택된 카테고리에 따라 상품을 필터링합니다.
     console.log("선택된 카테고리:", categoryId);
   };

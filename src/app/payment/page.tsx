@@ -9,9 +9,9 @@ const customerKey = "qMeoiFz0puFKj5lrGh35l"; // 실제 서비스에선 유저 ID
 
 export default function CheckoutPage() {
   const [payment, setPayment] = useState<any>(null);
-  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<
-    string | null
-  >(null);
+  //const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<
+  //  string | null
+  //>(null);
 
   const amount = {
     currency: "KRW",

@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { Minus, Plus, Trash2, ChevronLeft, X } from "lucide-react";
+import { Minus, Plus, X } from "lucide-react";
 import Link from "next/link";
 
 // 장바구니 상품 타입 정의
