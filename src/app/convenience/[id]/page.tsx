@@ -7,17 +7,17 @@ import StoreFeaturedProducts from "@/components/store/StoreFeaturedProducts";
 import StoreAllProducts from "@/components/store/StoreAllProducts";
 import ConvenienceCategories from "@/components/store/ConvenienceCategories";
 
-interface PageParams {
-  id: string;
+interface PageProps {
+  params: {
+    id: string;
+  };
 }
 
-export default function ConveniencePage({
-  params,
-}: {
-  params: PageParams;
-}) {
-  //const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+export default function ConveniencePage({params} : PageProps){
   const storeId = params.id;
+}
+  //const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  
 
   const handleCategorySelect = (categoryId: string) => {
     //setSelectedCategory(categoryId);
