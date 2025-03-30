@@ -5,7 +5,7 @@ import { cn } from "@/lib/utils";
 
 export interface InputProps
   extends React.InputHTMLAttributes<HTMLInputElement> {
-  // 추가 속성이 필요하면 여기에 정의
+  asChild?: boolean; // 최소한 하나의 속성을 추가하여 빈 인터페이스 에러 해결
 }
 
 const Input = React.forwardRef<HTMLInputElement, InputProps>(

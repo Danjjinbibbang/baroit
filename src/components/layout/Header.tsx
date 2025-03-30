@@ -2,23 +2,23 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
-import { MapPin, Search, Menu, ShoppingBag, User } from "lucide-react";
+import { MapPin, Search, ShoppingBag, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { AddressSearch, AddressData } from "@/components/address/AddressSearch";
-import { CurrentLocation } from "../address/CurrentLocation";
+//import { AddressData } from "@/components/address/AddressSearch";
+//import { CurrentLocation } from "../address/CurrentLocation";
 import AddressListModal from "../address/AddressListModal";
 
 export default function Header() {
   const [isAddressModalOpen, setIsAddressModalOpen] = useState(false);
-  const [currentAddress, setCurrentAddress] = useState("서울시 강남구");
+  //const [currentAddress, setCurrentAddress] = useState("서울시 강남구");
   const [searchQuery, setSearchQuery] = useState("");
-  const [isLoadingAddress, setIsLoadingAddress] = useState(false);
-  const [addressError, setAddressError] = useState<string | null>(null);
+  //const [isLoadingAddress, setIsLoadingAddress] = useState(false);
+  //const [addressError, setAddressError] = useState<string | null>(null);
 
-  const handleAddressSelect = (address: AddressData) => {
-    setCurrentAddress(address.roadAddress || address.jibunAddress);
-    //setIsAddressModalOpen(false);
-  };
+  // const handleAddressSelect = (address: AddressData) => {
+  //   setCurrentAddress(address.roadAddress || address.jibunAddress);
+  //   //setIsAddressModalOpen(false);
+  // };
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -101,7 +101,7 @@ export default function Header() {
             onClick={handleAddressClick}
           >
             <MapPin size={16} className="mr-1" />
-            <span className="truncate max-w-[150px]">{currentAddress}</span>
+            <span className="truncate max-w-[150px]">{/*currentAddress*/ `서울시 강남구`}</span>
           </button>
 
           {/* 검색창 */}

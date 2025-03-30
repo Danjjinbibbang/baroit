@@ -18,8 +18,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Address, AddressFormData } from "@/types/address";
-import { MapPin, Search } from "lucide-react";
-import { AddressSearch, AddressData } from "@/components/address/AddressSearch";
+import { MapPin } from "lucide-react";
+import { AddressSearch } from "@/components/address/AddressSearch";
 
 interface AddressFormModalProps {
   isOpen: boolean;
@@ -61,7 +61,7 @@ export default function AddressFormModal({
   const [customAlias, setCustomAlias] = useState("");
   const [isLoadingAddress, setIsLoadingAddress] = useState(false);
   const [addressError, setAddressError] = useState<string | null>(null);
-  const [isAddressSearchOpen, setIsAddressSearchOpen] = useState(false);
+  //const [isAddressSearchOpen, setIsAddressSearchOpen] = useState(false);
   const [isCustomMessageSelected, setIsCustomMessageSelected] = useState(false);
   const [customMessage, setCustomMessage] = useState("");
 
@@ -149,8 +149,8 @@ export default function AddressFormModal({
         const addressInfo = data.documents[0];
         let roadAddress = "";
         let jibunAddress = "";
-        let latitude = location.lat;
-        let longitude = location.lng;
+        const latitude = location.lat;
+        const longitude = location.lng;
 
         if (addressInfo.road_address) {
           roadAddress = addressInfo.road_address.address_name;
@@ -178,17 +178,17 @@ export default function AddressFormModal({
     }
   };
 
-  const handleAddressSelect = (address: AddressData) => {
-    setFormData({
-      ...formData,
-      detailed: address.roadAddress || address.jibunAddress,
-      road: address.roadAddress,
-      jibun: address.jibunAddress,
-      latitude: address.latitude,
-      longitude: address.longitude,
-    });
-    setIsAddressSearchOpen(false);
-  };
+  // const handleAddressSelect = (address: AddressData) => {
+  //   setFormData({
+  //     ...formData,
+  //     detailed: address.roadAddress || address.jibunAddress,
+  //     road: address.roadAddress,
+  //     jibun: address.jibunAddress,
+  //     latitude: address.latitude,
+  //     longitude: address.longitude,
+  //   });
+  //   setIsAddressSearchOpen(false);
+  // };
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -275,6 +275,7 @@ export default function AddressFormModal({
                       },
                       (error) => {
                         setAddressError("위치 정보를 가져올 수 없습니다.");
+                        console.error("위치 정보 가져오기 실패:", error);
                       }
                     );
                   } else {
