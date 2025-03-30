@@ -6,13 +6,11 @@ import StoreAllProducts from "@/components/store/StoreAllProducts";
 //import ConvenienceCategories from "@/components/store/ConvenienceCategories";
 import ConvenienceClient from "@/components/store/ConvenienceClient";
 
-interface PageProps {
-  params: {
-    id: string;
-  };
-}
-
-export default function ConveniencePage({params} : PageProps){
+export default async function ConveniencePage({
+  params,
+}: {
+  params: { id: string };
+}) {
   const storeId = params.id;
   //const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
 
