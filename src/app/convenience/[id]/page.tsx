@@ -9,9 +9,9 @@ import ConvenienceClient from "@/components/store/ConvenienceClient";
 export default async function ConveniencePage({
   params,
 }: {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }) {
-  const storeId = params.id;
+  const storeId = (await params).id;
   //const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
 
   return (
