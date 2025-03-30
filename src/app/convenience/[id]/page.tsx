@@ -7,10 +7,14 @@ import StoreFeaturedProducts from "@/components/store/StoreFeaturedProducts";
 import StoreAllProducts from "@/components/store/StoreAllProducts";
 import ConvenienceCategories from "@/components/store/ConvenienceCategories";
 
+interface PageParams {
+  id: string;
+}
+
 export default function ConveniencePage({
   params,
 }: {
-  params: { id: string };
+  params: PageParams;
 }) {
   //const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const storeId = params.id;
