@@ -15,9 +15,7 @@ interface PageProps {
 
 export default function ConveniencePage({params} : PageProps){
   const storeId = params.id;
-}
   //const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
-  
 
   const handleCategorySelect = (categoryId: string) => {
     //setSelectedCategory(categoryId);
