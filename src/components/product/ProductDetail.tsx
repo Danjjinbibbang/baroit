@@ -91,7 +91,17 @@ const productData: Product = {
   ],
 };
 
-export default function ProductDetail() {
+interface ProductDetailProps {
+  id: string;
+}
+
+export default function ProductDetail({ id }: ProductDetailProps) {
+  if (id !== productData.id) {
+    console.log(
+      "의미없는 콘솔이다. api 명세에 따라서 함수 만들고 호출해서 id값 받아도록 해야 함"
+    );
+  }
+
   const [expandedSections, setExpandedSections] = useState<{
     detail: boolean;
     returnPolicy: boolean;
