@@ -1,13 +1,15 @@
-"use client";
-
 import React from "react";
 import StoreHeader from "@/components/store/StoreHeader";
 import StoreSearch from "@/components/store/StoreSearch";
 import StoreFeaturedProducts from "@/components/store/StoreFeaturedProducts";
 import StoreAllProducts from "@/components/store/StoreAllProducts";
 
-export default function StorePage({ params }: { params: { id: string } }) {
-  const storeId = params.id;
+export default async function StorePage({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
+  const storeId = (await params).id;
 
   return (
     <div className="flex flex-col min-h-screen bg-gray-100">

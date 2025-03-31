@@ -2,9 +2,9 @@
 
 import React from "react";
 import Link from "next/link";
-
+import { Product } from "@/types/product";
 // 임시 대표 상품 데이터
-const featuredProductsData = {
+const featuredProductsData: Record<number, Product[]> = {
   1: [
     {
       id: 101,
@@ -13,6 +13,7 @@ const featuredProductsData = {
       discountRate: 0,
       image: "/products/meat1.jpg",
       description: "최상급 LA 소갈비",
+      category: "premium",
     },
     {
       id: 102,
@@ -21,6 +22,7 @@ const featuredProductsData = {
       discountRate: 0,
       image: "/products/meat2.jpg",
       description: "부드러운 육질의 부채살",
+      category: "domestic",
     },
     {
       id: 103,
@@ -29,6 +31,7 @@ const featuredProductsData = {
       discountRate: 0,
       image: "/products/meat3.jpg",
       description: "희소가치 높은 전산적살",
+      category: "premium",
     },
     {
       id: 104,
@@ -38,6 +41,7 @@ const featuredProductsData = {
       originalPrice: 15900,
       image: "/products/meat4.jpg",
       description: "두툼한 삼겹살",
+      category: "domestic",
     },
   ],
   2: [
@@ -48,6 +52,7 @@ const featuredProductsData = {
       discountRate: 0,
       image: "/products/flower1.jpg",
       description: "아름다운 장미 꽃다발",
+      category: "bouquet",
     },
     {
       id: 202,
@@ -57,6 +62,7 @@ const featuredProductsData = {
       originalPrice: 72000,
       image: "/products/flower2.jpg",
       description: "다양한 꽃으로 구성된 플라워 박스",
+      category: "box",
     },
   ],
   3: [
@@ -67,6 +73,7 @@ const featuredProductsData = {
       discountRate: 0,
       image: "/products/flower3.jpg",
       description: "특별한 날을 위한 프리미엄 꽃다발",
+      category: "special",
     },
   ],
   4: [
@@ -77,6 +84,7 @@ const featuredProductsData = {
       discountRate: 0,
       image: "/products/flower4.jpg",
       description: "작고 귀여운 미니 꽃다발",
+      category: "mini",
     },
   ],
   5: [
@@ -87,6 +95,7 @@ const featuredProductsData = {
       discountRate: 0,
       image: "/products/flower5.jpg",
       description: "풍성한 대형 꽃바구니",
+      category: "basket",
     },
   ],
 };

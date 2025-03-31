@@ -2,8 +2,7 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
-
-// 임시 카테고리 데이터
+import { Product } from "@/types/product";
 const categoryData = {
   1: [
     { id: "all", name: "전체" },
@@ -39,7 +38,7 @@ const categoryData = {
 };
 
 // 임시 전체 상품 데이터
-const allProductsData = {
+const allProductsData: Record<number, Product[]> = {
   1: [
     {
       id: 101,
