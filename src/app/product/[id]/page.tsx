@@ -10,7 +10,7 @@ export default async function ProductDetailPage({
 
   return (
     <div className="container mx-auto py-8 px-4">
-      <ProductDetail />
+      <ProductDetail id={id} />
     </div>
   );
 }
