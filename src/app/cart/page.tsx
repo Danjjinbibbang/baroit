@@ -11,6 +11,7 @@ import { CartItem } from "@/types/cart";
 import StoreCartGroup from "@/components/cart/StoreCartGroup";
 import CartSummary from "@/components/cart/CartSummary";
 import LoginPromptModal from "@/components/cart/LoginPromptModal";
+import { useAuthStore } from "@/zustand/auth";
 
 // 임시 장바구니 데이터
 const initialCartItems: CartItem[] = [
@@ -120,6 +121,7 @@ export default function CartPage() {
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [showLoginPrompt, setShowLoginPrompt] = useState(false);
+  const { isAuthenticated, requireAuth } = useAuthStore();
 
   // 카트 아이템을 스토어별로 그룹화
   const storeGroups = groupCartItemsByStore(cartItems);
@@ -193,27 +195,23 @@ export default function CartPage() {
 
   // 주문 핸들러
   const handleCheckout = () => {
-    // 로그인 여부 확인
-    const loggedIn = checkLoginStatus();
+    // 로그인 여부 확인 및 주문 처리
+    requireAuth(() => {
+      const selectedItems = cartItems.filter(
+        (item) => item.isSelected && !item.isSoldOut && !item.isDeleted
+      );
 
-    if (!loggedIn) {
-      setShowLoginPrompt(true);
-      return;
-    }
+      if (selectedItems.length === 0) {
+        alert("선택된 상품이 없습니다.");
+        return;
+      }
 
-    // 주문 처리 로직 (주문 페이지로 이동 등)
-    const selectedItems = cartItems.filter(
-      (item) => item.isSelected && !item.isSoldOut && !item.isDeleted
-    );
-
-    if (selectedItems.length === 0) {
-      alert("선택된 상품이 없습니다.");
-      return;
-    }
-
-    // 주문 페이지로 이동하는 로직 (실제로는 이동하거나 API 호출)
-    console.log("주문할 상품:", selectedItems);
-    // window.location.href = "/checkout";
+      // 주문 페이지로 이동
+      console.log("주문할 상품:", selectedItems);
+      // 주문 api 연동
+      // 결제 페이지로 이동
+      //window.location.href = "/payment";
+    });
   };
 
   // 모든 아이템이 선택되었는지 확인

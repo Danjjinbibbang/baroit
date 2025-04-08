@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Loader2, Edit2, Check, X } from "lucide-react";
-import Image from "next/image";
+import { useAuthStore } from "@/zustand/auth";
 import Header from "@/components/layout/Header";
 
 // API 응답 형태 정의
@@ -26,6 +26,7 @@ interface CustomerProfile {
 }
 
 export default function ProfilePage() {
+  const { logout } = useAuthStore();
   const [profile, setProfile] = useState<CustomerProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -129,6 +130,13 @@ export default function ProfilePage() {
     );
   }
 
+  const handleLogout = () => {
+    const confirmed = window.confirm("정말 로그아웃하시겠습니까?");
+    if (confirmed) {
+      logout(); // zustand에 있는 로그아웃
+      window.location.href = "/"; // 홈으로 이동
+    }
+  };
   // 디버깅: 프로필 데이터 출력
   console.log("렌더링 시 프로필 데이터:", profile);
 
@@ -138,7 +146,12 @@ export default function ProfilePage() {
         <Header />
       </header>
       <div className="max-w-3xl mx-auto mt-10 p-8 border rounded-lg bg-white max-h-[80vh] overflow-y-auto scroll-custom">
-        <h1 className="text-2xl font-bold mb-8">내 정보</h1>
+        <div className="flex justify-between items-center">
+          <h1 className="text-2xl font-bold mb-8">내 정보</h1>
+          <Button variant="destructive" onClick={handleLogout}>
+            로그아웃
+          </Button>
+        </div>
         {/* 프로필 이미지 */}
         <div className="flex flex-col items-center mb-8">
           <div className="relative h-32 w-32 mb-4">
