@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Loader2, Edit2, Check, X } from "lucide-react";
+import Image from "next/image";
 import Header from "@/components/layout/Header";
 
 // API 응답 형태 정의
