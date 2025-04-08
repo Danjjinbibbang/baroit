@@ -10,7 +10,12 @@ interface LoginResponse {
   name: string;
 }
 
-interface CustomerProfile {
+export interface CustomerProfileResponse {
+  success: boolean;
+  data: CustomerProfile;
+}
+
+export interface CustomerProfile {
   customerId: number;
   loginId: string;
   nickname: string;
@@ -58,21 +63,16 @@ export async function loginCustomer(data: LoginData): Promise<LoginResponse> {
   // 세션 쿠키는 자동으로 브라우저에 저장됨
   // 사용자 정보 가져오기
   try {
-    const profileResponse = await fetch(
-      `${process.env.NEXT_PUBLIC_API_URL}/api/users/customers/my/profile`,
-      {
-        credentials: "include",
-      }
-    );
+    const profileResponse = await getCustomerProfile();
 
-    if (profileResponse.ok) {
-      const userData = await profileResponse.json();
+    if (profileResponse.success && profileResponse.data) {
+      const userData = profileResponse.data;
 
       // Zustand 스토어에 사용자 정보 저장
       useAuthStore.getState().login({
         id: userData.customerId.toString(),
         loginId: userData.loginId,
-        name: userData.name,
+        nickname: userData.nickname,
         email: userData.email,
         tel: userData.phoneNumber,
         profileImageUrl: userData.profileImageUrl,
@@ -91,7 +91,7 @@ export function getCurrentUser() {
 }
 
 // 프로필 정보 조회
-export async function getCustomerProfile(): Promise<CustomerProfile> {
+export async function getCustomerProfile(): Promise<CustomerProfileResponse> {
   const response = await fetch(
     `${process.env.NEXT_PUBLIC_API_URL}/api/users/customers/profile`,
     {

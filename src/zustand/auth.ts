@@ -1,52 +1,139 @@
 import { create } from "zustand";
 import { User } from "@/types/user";
+import { getCustomerProfile } from "@/utils/auth";
+import { useEffect } from "react";
+import { useRouter } from "next/router";
+import { persist } from "zustand/middleware";
 
 interface AuthState {
   user: User | null;
   isAuthenticated: boolean;
+  isInitialized: boolean; // 초기화 상태 추가
 
   // 액션
   setUser: (user: User | null) => void;
   login: (user: User) => void;
   logout: () => void;
+  setInitialized: (initialized: boolean) => void; // 초기화 상태 설정
+
+  // 인증 확인 및 리다이렉트 기능
+  requireAuth: (action?: () => void) => boolean;
+  redirectToLogin: () => void;
 }
 
-// Zustand 스토어 생성
-export const useAuthStore = create<AuthState>()((set) => ({
-  user: null,
-  isAuthenticated: false,
-
-  setUser: (user) => set({ user, isAuthenticated: !!user }),
-
-  login: (user) =>
-    set({
-      user,
-      isAuthenticated: true,
-    }),
-
-  logout: () =>
-    set({
+// persist 미들웨어를 사용해 로컬 스토리지에 상태 저장
+export const useAuthStore = create<AuthState>()(
+  persist(
+    (set, get) => ({
       user: null,
       isAuthenticated: false,
+      isInitialized: false,
+
+      setInitialized: (initialized) => set({ isInitialized: initialized }),
+      setUser: (user) => set({ user, isAuthenticated: !!user }),
+
+      login: (user) =>
+        set({
+          user,
+          isAuthenticated: true,
+          isInitialized: true,
+        }),
+
+      logout: () => {
+        // 로그아웃 시 로컬 스토리지에서도 제거
+        if (typeof window !== "undefined") {
+          localStorage.removeItem("auth-storage");
+        }
+        set({
+          user: null,
+          isAuthenticated: false,
+        });
+      },
+
+      // 인증 필요 확인 함수
+      requireAuth: (action) => {
+        // 현재 인증 상태 확인
+        const { isAuthenticated, isInitialized } = get();
+
+        // 초기화 상태 확인
+        if (!isInitialized) {
+          // 초기화되지 않은 경우 세션 확인
+          const sessionValid = checkIsAuthenticated();
+          if (!sessionValid) {
+            alert("로그인이 필요한 서비스입니다.");
+            get().redirectToLogin();
+            return false;
+          }
+        }
+
+        // 이미 초기화된 상태에서 인증 확인
+        if (!isAuthenticated) {
+          alert("로그인이 필요한 서비스입니다.");
+          get().redirectToLogin();
+          return false;
+        }
+
+        // 인증된 경우 선택적으로 액션 실행
+        if (action) {
+          action();
+        }
+        return true;
+      },
+
+      // 로그인 페이지로 리다이렉트 함수
+      redirectToLogin: () => {
+        if (typeof window !== "undefined") {
+          // 현재 경로 저장 (로그인 후 원래 페이지로 돌아올 수 있도록)
+          const currentPath = window.location.pathname;
+          if (currentPath !== "/login") {
+            sessionStorage.setItem("redirectAfterLogin", currentPath);
+            window.location.href = "/login";
+          }
+        }
+      },
     }),
-}));
+    {
+      name: "auth-storage", // 로컬 스토리지에 저장될 키
+      partialize: (state) => ({
+        user: state.user,
+        isAuthenticated: state.isAuthenticated,
+        isInitialized: state.isInitialized,
+      }),
+    }
+  )
+);
 
-// 인증 확인 함수 - 쿠키 존재 여부도 확인
+// 인증 상태를 확인하고 필요시 사용자 정보 로드
 export const checkIsAuthenticated = (): boolean => {
-  // 1. Zustand 스토어 확인
-  const { isAuthenticated } = useAuthStore.getState();
+  const { isAuthenticated, isInitialized, setInitialized } =
+    useAuthStore.getState();
 
-  if (isAuthenticated) return true;
+  // 이미 인증된 경우
+  if (isAuthenticated) {
+    if (!isInitialized) setInitialized(true);
+    return true;
+  }
 
-  // 2. 쿠키 확인 (세션 쿠키)
+  // 세션 쿠키 확인
   const hasCookie = checkSessionCookie();
+  console.log("세션 쿠키 확인:", hasCookie);
 
   // 쿠키가 있으면 사용자 정보 가져오기
   if (hasCookie) {
-    fetchUserInfo().catch(() => {
-      // 쿠키는 있지만 API 호출 실패 시 로그아웃 처리
-      useAuthStore.getState().logout();
-    });
+    // 비동기로 사용자 정보 가져오기 시작
+    fetchUserInfo()
+      .then(() => {
+        setInitialized(true);
+        console.log("사용자 정보 로드 완료");
+      })
+      .catch((error) => {
+        console.error("사용자 정보 가져오기 실패:", error);
+        useAuthStore.getState().logout();
+        setInitialized(true);
+      });
+  } else {
+    // 세션이 없는 경우에도 초기화 완료로 표시
+    setInitialized(true);
   }
 
   return hasCookie;
@@ -57,38 +144,67 @@ const checkSessionCookie = (): boolean => {
   if (typeof document === "undefined") return false; // SSR 환경에서 실행 방지
 
   // 세션 쿠키 확인 (세션 쿠키 이름은 실제 사용하는 이름으로 변경)
-  return document.cookie
+  const hasCookie = document.cookie
     .split(";")
     .some(
       (cookie) =>
         cookie.trim().startsWith("sessionId=") ||
         cookie.trim().startsWith("JSESSIONID=")
     );
+
+  // 디버깅용 로그
+  console.log("쿠키 확인:", document.cookie, "세션 있음:", hasCookie);
+  return hasCookie;
 };
 
 // 사용자 정보 가져오기 함수
 const fetchUserInfo = async (): Promise<void> => {
   try {
     // API를 호출하여 현재 로그인한 사용자 정보 가져오기
-    const response = await fetch("/api/users/customers/my/profile");
+    const response = await getCustomerProfile();
+    console.log("프로필 응답:", response);
 
-    if (!response.ok) {
-      throw new Error("사용자 정보를 가져오는데 실패했습니다.");
+    if (response.success && response.data) {
+      const userData = response.data;
+      // Zustand 스토어에 사용자 정보 저장
+      useAuthStore.getState().login({
+        id: userData.customerId.toString(),
+        loginId: userData.loginId,
+        nickname: userData.nickname,
+        email: userData.email,
+        tel: userData.phoneNumber,
+        profileImageUrl: userData.profileImageUrl,
+      });
+      return;
     }
 
-    const userData = await response.json();
-
-    // Zustand 스토어에 사용자 정보 저장
-    useAuthStore.getState().login({
-      id: userData.customerId.toString(),
-      loginId: userData.loginId,
-      name: userData.name,
-      email: userData.email,
-      tel: userData.phoneNumber,
-      profileImageUrl: userData.profileImageUrl,
-    });
+    throw new Error("유효한 사용자 정보를 받지 못했습니다.");
   } catch (error) {
     console.error("사용자 정보 가져오기 실패:", error);
     throw error;
   }
 };
+
+// 인증이 필요한 페이지에서 사용할 훅
+export function useRequireAuth() {
+  const router = useRouter();
+  const { isAuthenticated, isInitialized } = useAuthStore();
+
+  useEffect(() => {
+    // 초기화 되지 않았다면 인증 상태 확인
+    if (!isInitialized) {
+      checkIsAuthenticated();
+    } else if (!isAuthenticated) {
+      alert("로그인이 필요한 페이지입니다.");
+
+      // 현재 경로 저장하고 로그인 페이지로 이동
+      const currentPath = window.location.pathname;
+      if (currentPath !== "/login") {
+        sessionStorage.setItem("redirectAfterLogin", currentPath);
+        router.push("/login");
+      }
+    }
+  }, [isAuthenticated, isInitialized, router]);
+
+  return { isAuthenticated, isInitialized };
+}

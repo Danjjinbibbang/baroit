@@ -8,6 +8,7 @@ interface CustomerSignUpData {
 }
 
 interface SignUpResponse {
+  success: boolean;
   data: {
     customerId?: number;
     signUpTime?: string;
@@ -29,21 +30,14 @@ export async function registerCustomer(
       }
     );
 
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.message || "회원가입에 실패했습니다.");
+    const result = await response.json();
+    if (result.success === false) {
+      throw new Error("회원가입에 실패했습니다.");
     }
 
-    const result = await response.json();
-
-    return {
-      data: {
-        customerId: result.customerId,
-        signUpTime: result.signUpTime,
-      },
-    };
+    return result;
   } catch (error) {
     console.log("회원가입 실패: ", error);
-    return { data: { customerId: undefined } };
+    throw error;
   }
 }

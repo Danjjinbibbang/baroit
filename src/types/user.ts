@@ -12,7 +12,7 @@ export interface AddressRequest {
 export interface User {
   id: string;
   loginId: string;
-  name: string;
+  nickname: string;
   email: string;
   tel: string;
   profileImageUrl?: string;
@@ -21,7 +21,7 @@ export interface User {
 // 회원가입 데이터
 export interface CustomerSignUpData {
   loginId: string;
-  name: string;
+  nickname: string;
   email: string;
   password: string;
   tel: string;

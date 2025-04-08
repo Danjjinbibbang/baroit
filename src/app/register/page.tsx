@@ -89,7 +89,6 @@ export default function RegisterPage() {
     setLoading(true);
 
     try {
-      // 실제 API 호출 (예시)
       const response = await registerCustomer({
         loginId: data.userId,
         nickname: data.name,
@@ -99,7 +98,7 @@ export default function RegisterPage() {
       });
       console.log("회원가입 응답:", response);
       if (response.data.customerId) {
-        console.log("회원가입 데이터:", data);
+        //console.log("회원가입 데이터:", response);
         alert("회원가입이 완료되었습니다!");
         window.location.href = "/login";
       } else {
