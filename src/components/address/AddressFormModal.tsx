@@ -372,7 +372,9 @@ export default function AddressFormModal({
             <Label>배송기사님께 요청하기</Label>
             <Select
               value={
-                isCustomMessageSelected ? "직접 입력" : formData.riderMessage
+                isCustomMessageSelected
+                  ? "직접 입력"
+                  : formData.riderMessage || ""
               }
               onValueChange={(value) => {
                 if (value === "직접 입력") {
