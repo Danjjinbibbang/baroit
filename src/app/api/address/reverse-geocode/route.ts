@@ -4,7 +4,7 @@ import { NextRequest, NextResponse } from "next/server";
 //const KAKAO_API_KEY = "56f434c41d98f8050bf144398f9670c2";
 
 // 환경 변수 디버깅
-const KAKAO_API_KEY = process.env.NEXT_PUBLIC_KAKAO_APP_KEY;
+const KAKAO_API_KEY = process.env.NEXT_PUBLIC_KAKAO_JAVASCRIPT_KEY;
 console.log("환경 변수에서 가져온 키:", KAKAO_API_KEY);
 //console.log("하드코딩된 키:", KAKAO_API_KEY);
 
@@ -29,12 +29,8 @@ export async function GET(request: NextRequest) {
       {
         headers: {
           Authorization: `KakaoAK ${KAKAO_API_KEY}`,
+          KA: "sdk/1.0.0 os/javascript origin/https://localhost:3000",
           "Content-Type": "application/json;charset=UTF-8",
-          // 다양한 KA 헤더 형식 시도
-          KA: "sdk/4.0.0",
-          "User-Agent": "Mozilla/5.0",
-          Referer: "http://localhost:3000",
-          Origin: "http://localhost:3000",
         },
       }
     );

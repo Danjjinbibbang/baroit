@@ -114,6 +114,7 @@ export function AddressSearch({
 
   return (
     <Button
+      type="button"
       onClick={openAddressSearch}
       className={className}
       disabled={!isScriptLoaded}

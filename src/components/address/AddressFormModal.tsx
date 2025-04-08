@@ -20,6 +20,7 @@ import {
 import { Address, AddressFormData } from "@/types/address";
 import { MapPin } from "lucide-react";
 import { AddressSearch } from "@/components/address/AddressSearch";
+import { createAddress, updateAddress } from "@/utils/address";
 
 interface AddressFormModalProps {
   isOpen: boolean;
@@ -43,13 +44,12 @@ export default function AddressFormModal({
   onClose,
   onSuccess,
   address,
-  customerId,
 }: AddressFormModalProps) {
   const [formData, setFormData] = useState<AddressFormData>({
     detailed: "",
     alias: "",
-    riderMessage: null,
-    entrancePassword: null,
+    riderMessage: "",
+    entrancePassword: "",
     deliveryGuideMessage: "",
     road: "",
     jibun: "",
@@ -61,7 +61,6 @@ export default function AddressFormModal({
   const [customAlias, setCustomAlias] = useState("");
   const [isLoadingAddress, setIsLoadingAddress] = useState(false);
   const [addressError, setAddressError] = useState<string | null>(null);
-  //const [isAddressSearchOpen, setIsAddressSearchOpen] = useState(false);
   const [isCustomMessageSelected, setIsCustomMessageSelected] = useState(false);
   const [customMessage, setCustomMessage] = useState("");
 
@@ -70,57 +69,98 @@ export default function AddressFormModal({
       setFormData({
         detailed: address.detailed,
         alias: address.alias,
-        riderMessage: address.riderMessage,
+        riderMessage: address.riderMessage || "",
         entrancePassword: address.entrancePassword,
-        deliveryGuideMessage: address.deliveryGuideMessage,
-        road: address.road,
-        jibun: address.jibun,
-        latitude: address.latitude,
-        longitude: address.longitude,
+        deliveryGuideMessage: address.deliveryGuideMessage || "",
+        road: address.road || "",
+        jibun: address.jibun || "",
+        latitude: address.latitude || 0,
+        longitude: address.longitude || 0,
       });
+
+      // 커스텀 알리아스와 메시지 설정
+      if (address.alias !== "집" && address.alias !== "회사") {
+        setIsOtherSelected(true);
+        setCustomAlias(address.alias);
+      }
+
+      if (!DELIVERY_MESSAGES.includes(address.riderMessage || "")) {
+        setIsCustomMessageSelected(true);
+        setCustomMessage(address.riderMessage || "");
+      }
     } else {
-      setFormData({
-        detailed: "",
-        alias: "",
-        riderMessage: null,
-        entrancePassword: null,
-        deliveryGuideMessage: "",
-        road: "",
-        jibun: "",
-        latitude: 0,
-        longitude: 0,
-      });
+      resetForm();
     }
   }, [address]);
 
-  // 신규 주소 등록
+  // 폼 초기화 함수
+  const resetForm = () => {
+    setFormData({
+      detailed: "",
+      alias: "",
+      riderMessage: "",
+      entrancePassword: null,
+      deliveryGuideMessage: "",
+      road: "",
+      jibun: "",
+      latitude: 0,
+      longitude: 0,
+    });
+    setIsOtherSelected(false);
+    setCustomAlias("");
+    setIsCustomMessageSelected(false);
+    setCustomMessage("");
+  };
+
+  // 주소 저장 처리
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
 
     try {
-      const url = `/api/users/customers/${customerId}/addresses`;
-
-      const method = "POST";
-
-      const response = await fetch(url, {
-        method,
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          ...formData,
-          customerId,
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error("주소 저장 실패");
+      // 필수 필드 검증
+      if (!formData.alias) {
+        throw new Error("배송지 구분을 선택해주세요.");
       }
 
+      // 주소 데이터 준비
+      const addressData = {
+        ...formData,
+      };
+
+      // 주소 수정 시 데이터 준비
+      const updateAddressData = {
+        detailed: formData.detailed,
+        alias: formData.alias,
+        riderMessage: formData.riderMessage,
+        entrancePassword: formData.entrancePassword,
+        deliveryGuideMessage: formData.deliveryGuideMessage,
+      };
+
+      // 콘솔에 로그 출력 (디버깅용)
+      console.log("API 호출 전 데이터:", addressData);
+
+      if (address) {
+        // 주소 수정 - updateAddress 유틸 함수 사용
+        await updateAddress(address.addressId, updateAddressData);
+      } else {
+        // 신규 주소 생성 - createAddress 유틸 함수 사용
+        await createAddress(addressData);
+      }
+
+      // 성공 콜백 호출
       onSuccess();
     } catch (error) {
-      console.error("주소 저장 중 오류:", error);
+      // 에러 처리
+      const errorMessage =
+        error instanceof Error ? error.message : "주소 저장에 실패했습니다.";
+      console.error(address ? "주소 수정 실패:" : "주소 생성 실패:", error);
+
+      // 사용자에게 오류 표시 (옵션)
+      setAddressError(errorMessage);
+
+      // 여기서 alert 대신 더 우아한 방식으로 오류를 표시할 수 있습니다
+      alert(errorMessage);
     } finally {
       setIsLoading(false);
     }
@@ -177,18 +217,6 @@ export default function AddressFormModal({
       setIsLoadingAddress(false);
     }
   };
-
-  // const handleAddressSelect = (address: AddressData) => {
-  //   setFormData({
-  //     ...formData,
-  //     detailed: address.roadAddress || address.jibunAddress,
-  //     road: address.roadAddress,
-  //     jibun: address.jibunAddress,
-  //     latitude: address.latitude,
-  //     longitude: address.longitude,
-  //   });
-  //   setIsAddressSearchOpen(false);
-  // };
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -248,9 +276,6 @@ export default function AddressFormModal({
                 onSelectAddress={(selectedAddress) => {
                   setFormData({
                     ...formData,
-                    detailed:
-                      selectedAddress.roadAddress ||
-                      selectedAddress.jibunAddress,
                     road: selectedAddress.roadAddress,
                     jibun: selectedAddress.jibunAddress,
                     latitude: selectedAddress.latitude || 0,
@@ -291,9 +316,19 @@ export default function AddressFormModal({
             </div>
 
             <Input
-              value={formData.detailed}
+              value={formData.road || formData.jibun}
               readOnly
               placeholder="주소가 여기에 표시됩니다"
+            />
+            <Input
+              value={formData.detailed}
+              placeholder="상세 주소를 입력해주세요"
+              onChange={(e) => {
+                setFormData({
+                  ...formData,
+                  detailed: e.target.value,
+                });
+              }}
             />
 
             {addressError && (
@@ -318,19 +353,33 @@ export default function AddressFormModal({
           </div>
 
           <div className="space-y-2">
-            <Label>배송 요청사항</Label>
+            <Label htmlFor="deliveryGuideMessage">사장님께 요청하기</Label>
+            <Input
+              id="deliveryGuideMessage"
+              type="text"
+              value={formData.deliveryGuideMessage || ""}
+              onChange={(e) =>
+                setFormData({
+                  ...formData,
+                  deliveryGuideMessage: e.target.value,
+                })
+              }
+              placeholder="배송 안내 메시지를 입력하세요"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label>배송기사님께 요청하기</Label>
             <Select
               value={
-                isCustomMessageSelected
-                  ? "직접 입력"
-                  : formData.deliveryGuideMessage
+                isCustomMessageSelected ? "직접 입력" : formData.riderMessage
               }
               onValueChange={(value) => {
                 if (value === "직접 입력") {
                   setIsCustomMessageSelected(true);
                 } else {
                   setIsCustomMessageSelected(false);
-                  setFormData({ ...formData, deliveryGuideMessage: value });
+                  setFormData({ ...formData, riderMessage: value });
                 }
               }}
             >
@@ -338,8 +387,8 @@ export default function AddressFormModal({
                 <SelectValue>
                   {isCustomMessageSelected
                     ? customMessage || "직접 입력"
-                    : formData.deliveryGuideMessage ||
-                      "배송 요청사항을 선택하세요"}
+                    : formData.riderMessage ||
+                      "배송 기사님께 전달할 메시지를 선택하세요"}
                 </SelectValue>
               </SelectTrigger>
               <SelectContent className="bg-white">
@@ -363,10 +412,10 @@ export default function AddressFormModal({
                   setCustomMessage(newValue);
                   setFormData({
                     ...formData,
-                    deliveryGuideMessage: newValue,
+                    riderMessage: newValue,
                   });
                 }}
-                placeholder="배송 요청사항을 직접 입력해주세요"
+                placeholder="배송 기사님께 전달할 메시지를 직접 입력해주세요"
               />
             )}
           </div>

@@ -92,12 +92,13 @@ export default function RegisterPage() {
       // 실제 API 호출 (예시)
       const response = await registerCustomer({
         loginId: data.userId,
-        name: data.name,
+        nickname: data.name,
         email: data.email,
         password: data.password,
         tel: data.phone,
       });
-      if (response.customerId) {
+      console.log("회원가입 응답:", response);
+      if (response.data.customerId) {
         console.log("회원가입 데이터:", data);
         alert("회원가입이 완료되었습니다!");
         window.location.href = "/login";
