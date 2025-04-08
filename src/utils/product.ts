@@ -49,3 +49,5 @@ export async function postProduct(
 
   return res;
 }
+
+// 개별 상품 조회

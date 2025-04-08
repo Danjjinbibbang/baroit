@@ -4,14 +4,13 @@ import React, { useState } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { loginCustomer, loginBusiness } from "@/utils/auth";
+import { loginCustomer } from "@/utils/auth";
 
 export default function LoginPage() {
   const [userId, setUserId] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [userType, setUserType] = useState("customer");
 
   // 카카오 로그인 처리 함수
   const handleKakaoLogin = () => {
@@ -43,11 +42,7 @@ export default function LoginPage() {
     try {
       const loginData = { loginId: userId, password };
 
-      if (userType === "customer") {
-        await loginCustomer(loginData);
-      } else {
-        await loginBusiness(loginData);
-      }
+      await loginCustomer(loginData);
 
       // 로그인 성공 시 메인 페이지로 리다이렉트
       window.location.href = "/";
@@ -72,39 +67,6 @@ export default function LoginPage() {
           onSubmit={handleLogin}
           className="flex flex-col gap-y-4 mb-6 w-[80%]"
         >
-          <div className="flex flex-col gap-y-4 mb-4">
-            <div className="text-sm font-medium mb-1">로그인 유형</div>
-            <div className="flex gap-x-4">
-              <div className="flex items-center">
-                <input
-                  type="radio"
-                  id="customerType"
-                  name="userType"
-                  value="customer"
-                  checked={userType === "customer"}
-                  onChange={() => setUserType("customer")}
-                  className="mr-2"
-                />
-                <label htmlFor="customerType" className="text-sm">
-                  일반 사용자
-                </label>
-              </div>
-              <div className="flex items-center">
-                <input
-                  type="radio"
-                  id="businessType"
-                  name="userType"
-                  value="business"
-                  checked={userType === "business"}
-                  onChange={() => setUserType("business")}
-                  className="mr-2"
-                />
-                <label htmlFor="businessType" className="text-sm">
-                  사업자
-                </label>
-              </div>
-            </div>
-          </div>
           <div className="flex flex-col gap-y-2">
             <label htmlFor="userId" className="block text-sm font-medium mb-1">
               아이디

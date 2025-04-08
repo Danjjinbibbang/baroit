@@ -1,11 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 
 // 카카오 API 키 설정 (하드코딩 - 테스트용)
-const KAKAO_API_KEY = "6db9effce248799d2cc94307ea212995";
+//const KAKAO_API_KEY = "6db9effce248799d2cc94307ea212995";
 
 // 환경 변수 디버깅
-console.log("환경 변수에서 가져온 키:", process.env.KAKAO_API_KEY);
-console.log("하드코딩된 키:", KAKAO_API_KEY);
+//console.log("환경 변수에서 가져온 키:", process.env.KAKAO_API_KEY);
+const KAKAO_API_KEY = process.env.NEXT_PUBLIC_KAKAO_JAVASCRIPT_KEY;
+//console.log("하드코딩된 키:", KAKAO_API_KEY);
 
 export async function GET(request: NextRequest) {
   try {

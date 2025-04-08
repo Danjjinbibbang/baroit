@@ -1,27 +1,33 @@
 // 회원가입 처리 유틸 함수
 interface CustomerSignUpData {
   loginId: string;
-  name: string;
+  nickname: string;
   email: string;
   password: string;
   tel: string;
 }
 
 interface SignUpResponse {
-  customerId?: number;
+  data: {
+    customerId?: number;
+    signUpTime?: string;
+  };
 }
 
 export async function registerCustomer(
   data: CustomerSignUpData
 ): Promise<SignUpResponse> {
   try {
-    const response = await fetch("/api/auth/customers/sign-up", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(data),
-    });
+    const response = await fetch(
+      `${process.env.NEXT_PUBLIC_API_URL}/api/auth/customers/signup`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(data),
+      }
+    );
 
     if (!response.ok) {
       const errorData = await response.json();
@@ -31,10 +37,13 @@ export async function registerCustomer(
     const result = await response.json();
 
     return {
-      customerId: result.customerId,
+      data: {
+        customerId: result.customerId,
+        signUpTime: result.signUpTime,
+      },
     };
   } catch (error) {
     console.log("회원가입 실패: ", error);
-    return { customerId: undefined };
+    return { data: { customerId: undefined } };
   }
 }
