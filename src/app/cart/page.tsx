@@ -3,202 +3,166 @@
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import {
-  groupCartItemsByStore,
-  checkLoginStatus,
-  filterExpiredCartItems,
+  getStoreCart,
+  updateCartItemQuantity,
+  removeFromCart,
+  clearStoreCart,
 } from "@/utils/cart";
-import { CartItem } from "@/types/cart";
+import { StoreCartGroupType } from "@/types/cart";
 import StoreCartGroup from "@/components/cart/StoreCartGroup";
 import CartSummary from "@/components/cart/CartSummary";
 import LoginPromptModal from "@/components/cart/LoginPromptModal";
 import { useAuthStore } from "@/zustand/auth";
 
-// 임시 장바구니 데이터
-const initialCartItems: CartItem[] = [
-  {
-    id: "1",
-    productId: "p1",
-    name: "무농약 당근 (1kg 내외)",
-    storeId: "store1",
-    storeName: "산지직송 농장",
-    price: 6900,
-    discountRate: 10,
-    image:
-      "https://images.unsplash.com/photo-1598170845058-32b9d6a5d4c4?q=80&w=1974&auto=format&fit=crop&ixlib=rb-4.0.3",
-    quantity: 2,
-    options: { 크기: "중" },
-    isSelected: true,
-    stock: 10,
-    isSoldOut: false,
-    isDeleted: false,
-    addedAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000), // 5일 전
-  },
-  {
-    id: "2",
-    productId: "p2",
-    name: "유기농 사과 (5개입)",
-    storeId: "store1",
-    storeName: "산지직송 농장",
-    price: 12500,
-    discountRate: 5,
-    image:
-      "https://images.unsplash.com/photo-1560806887-1e4cd0b6cbd6?q=80&w=1974&auto=format&fit=crop&ixlib=rb-4.0.3",
-    quantity: 1,
-    isSelected: true,
-    stock: 5,
-    isSoldOut: false,
-    isDeleted: false,
-    addedAt: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000), // 10일 전
-  },
-  {
-    id: "3",
-    productId: "p3",
-    name: "국내산 무항생제 계란 (30구)",
-    storeId: "store2",
-    storeName: "행복한 닭장",
-    price: 8900,
-    image:
-      "https://images.unsplash.com/photo-1582722872445-44dc5f7e3c8f?q=80&w=1974&auto=format&fit=crop&ixlib=rb-4.0.3",
-    quantity: 1,
-    isSelected: true,
-    stock: 3,
-    isSoldOut: false,
-    isDeleted: false,
-    addedAt: new Date(Date.now() - 15 * 24 * 60 * 60 * 1000), // 15일 전
-  },
-  {
-    id: "4",
-    productId: "p4",
-    name: "유기농 딸기 (500g)",
-    storeId: "store1",
-    storeName: "산지직송 농장",
-    price: 15900,
-    discountRate: 8,
-    image:
-      "https://images.unsplash.com/photo-1587393855524-087f83d95bc9?q=80&w=2060&auto=format&fit=crop&ixlib=rb-4.0.3",
-    quantity: 1,
-    isSelected: true,
-    stock: 0,
-    isSoldOut: true,
-    isDeleted: false,
-    addedAt: new Date(Date.now() - 20 * 24 * 60 * 60 * 1000), // 20일 전
-  },
-  {
-    id: "5",
-    productId: "p5",
-    name: "친환경 무농약 브로콜리",
-    storeId: "store3",
-    storeName: "유기농 채소마을",
-    price: 4500,
-    image:
-      "https://images.unsplash.com/photo-1459411552884-841db9b3cc2a?q=80&w=1974&auto=format&fit=crop&ixlib=rb-4.0.3",
-    quantity: 2,
-    isSelected: true,
-    stock: 8,
-    isSoldOut: false,
-    isDeleted: false,
-    addedAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000), // 2일 전
-  },
-  {
-    id: "6",
-    productId: "p6",
-    name: "삭제된 상품",
-    storeId: "store3",
-    storeName: "유기농 채소마을",
-    price: 3200,
-    image:
-      "https://images.unsplash.com/photo-1588391051157-b4945d66dec3?q=80&w=1974&auto=format&fit=crop&ixlib=rb-4.0.3",
-    quantity: 1,
-    isSelected: false,
-    stock: 0,
-    isSoldOut: false,
-    isDeleted: true,
-    addedAt: new Date(Date.now() - 25 * 24 * 60 * 60 * 1000), // 25일 전
-  },
-];
+// 장바구니 데이터에 UI 상태를 추가하는 함수
+const addUiStateToCartItems = (
+  items: StoreCartGroupType[]
+): StoreCartGroupType[] => {
+  return items.map((group) => {
+    // 서버에서 온 cartItems에 UI 상태 추가
+    const cartItemsWithState = group.data.cartItems.map((item) => ({
+      ...item,
+      isSelected: item.itemType !== "DELETED", // 기본적으로 삭제된 상품이 아니면 선택
+      isSoldOut: item.itemType === "SOLDOUT", // 품절 상태
+      isDeleted: item.itemType === "DELETED", // 삭제된 상품
+      stock: 100, // 기본 재고값 (실제로는 서버에서 받아와야 함)
+    }));
+
+    return {
+      ...group,
+      data: {
+        ...group.data,
+        cartItems: cartItemsWithState,
+      },
+    };
+  });
+};
 
 export default function CartPage() {
-  const [cartItems, setCartItems] = useState<CartItem[]>([]);
+  const { requireAuth } = useAuthStore();
+  const [cartItems, setCartItems] = useState<StoreCartGroupType[]>([]);
+  const [showLoginModal, setShowLoginModal] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
-  const [showLoginPrompt, setShowLoginPrompt] = useState(false);
-  const { isAuthenticated, requireAuth } = useAuthStore();
 
-  // 카트 아이템을 스토어별로 그룹화
-  const storeGroups = groupCartItemsByStore(cartItems);
+  // 초기 로드 시 전체 장바구니 조회
+  const fetchCartItems = async () => {
+    try {
+      setIsLoading(true);
+      // API를 통해 장바구니 데이터 가져오기 (storeId 없이 호출)
+      const response = await getStoreCart(1);
+      console.log("장바구니 조회 데이터: ", response);
 
-  // 컴포넌트 마운트 시 장바구니 데이터 로드
-  useEffect(() => {
-    const loadCartData = async () => {
-      // 실제로는 API 호출로 장바구니 데이터를 가져와야 함
-      // 30일이 지난 항목 필터링
-      const filteredItems = filterExpiredCartItems(initialCartItems);
-      setCartItems(filteredItems);
+      if (response) {
+        // response가 배열인지 확인하고 처리
+        const items = Array.isArray(response) ? response : [response];
+        console.log("items: ", items.length);
+
+        // data가 null이 아닌 항목만 필터링
+        const validItems = items.filter((item) => item.data != null);
+
+        if (validItems.length > 0) {
+          const cartItemsWithState = addUiStateToCartItems(validItems);
+          setCartItems(cartItemsWithState);
+        } else {
+          setCartItems([]);
+        }
+      } else {
+        setCartItems([]);
+      }
+
       setIsLoading(false);
-    };
+    } catch (error) {
+      console.error("장바구니 로드 실패:", error);
+      setIsLoading(false);
+    }
+  };
 
-    loadCartData();
+  useEffect(() => {
+    fetchCartItems();
   }, []);
 
-  // 전체 선택 상태 업데이트
-  const handleSelectAll = (isSelected: boolean) => {
-    setCartItems(
-      cartItems.map((item) => ({
-        ...item,
-        isSelected: item.isSoldOut || item.isDeleted ? false : isSelected,
+  // 상품 선택 처리
+  const handleSelectItem = (itemId: number) => {
+    setCartItems((prevItems) =>
+      prevItems.map((group) => ({
+        ...group,
+        data: {
+          ...group.data,
+          cartItems: group.data.cartItems.map((item) =>
+            item.itemId === itemId
+              ? { ...item, isSelected: !item.isSelected }
+              : item
+          ),
+        },
       }))
     );
   };
 
-  // 개별 아이템 선택/해제 핸들러
-  const handleSelectItem = (id: string) => {
-    setCartItems(
-      cartItems.map((item) =>
-        item.id === id ? { ...item, isSelected: !item.isSelected } : item
-      )
+  // 스토어 전체 상품 선택 처리
+  const handleSelectStore = (storeId: number, isSelected: boolean) => {
+    setCartItems((prevItems) =>
+      prevItems.map((group) => {
+        if (group.data.storeId === storeId) {
+          return {
+            ...group,
+            data: {
+              ...group.data,
+              cartItems: group.data.cartItems.map((item) =>
+                item.itemType !== "DELETED" ? { ...item, isSelected } : item
+              ),
+            },
+          };
+        }
+        return group;
+      })
     );
   };
 
-  // 스토어 전체 선택/해제 핸들러
-  const handleSelectStore = (storeId: string, isSelected: boolean) => {
-    setCartItems(
-      cartItems.map((item) =>
-        item.storeId === storeId && !item.isSoldOut && !item.isDeleted
-          ? { ...item, isSelected }
-          : item
-      )
-    );
+  // 상품 삭제 처리
+  const handleRemoveItem = async (itemId: number) => {
+    try {
+      // 해당 상품이 속한 스토어 찾기
+      const storeGroup = cartItems.find((group) =>
+        group.data.cartItems.some((item) => item.itemId === itemId)
+      );
+
+      if (!storeGroup) {
+        console.error("삭제할 상품을 찾을 수 없습니다.");
+        return;
+      }
+
+      const storeId = storeGroup.data.storeId;
+
+      // API를 통해 장바구니에서 상품 삭제
+      const success = await removeFromCart(itemId, storeId);
+
+      if (success) {
+        // 장바구니 데이터 다시 로드
+        await fetchCartItems();
+      } else {
+        alert("상품 삭제에 실패했습니다. 다시 시도해주세요.");
+      }
+    } catch (error) {
+      console.error("상품 삭제 실패:", error);
+    }
   };
 
-  // 아이템 삭제 핸들러
-  const handleRemoveItem = (id: string) => {
-    setCartItems(cartItems.filter((item) => item.id !== id));
-  };
+  // 선택된 상품 삭제
+  const handleRemoveSelected = async () => {
+    try {
+      const confirmed = window.confirm(
+        "선택한 상품을 장바구니에서 삭제하시겠습니까?"
+      );
+      if (!confirmed) return;
 
-  // 선택 항목 삭제 핸들러
-  const handleRemoveSelected = () => {
-    setCartItems(cartItems.filter((item) => !item.isSelected));
-  };
-
-  // 수량 변경 핸들러
-  const handleQuantityChange = (id: string, newQuantity: number) => {
-    setCartItems(
-      cartItems.map((item) =>
-        item.id === id
-          ? {
-              ...item,
-              quantity: Math.max(1, Math.min(newQuantity, item.stock)),
-            }
-          : item
-      )
-    );
-  };
-
-  // 주문 핸들러
-  const handleCheckout = () => {
-    // 로그인 여부 확인 및 주문 처리
-    requireAuth(() => {
-      const selectedItems = cartItems.filter(
-        (item) => item.isSelected && !item.isSoldOut && !item.isDeleted
+      // 선택된 상품 찾기
+      const selectedItems = cartItems.flatMap((group) =>
+        group.data.cartItems
+          .filter((item) => item.isSelected && item.itemType !== "DELETED")
+          .map((item) => ({
+            itemId: item.itemId,
+            storeId: group.data.storeId,
+          }))
       );
 
       if (selectedItems.length === 0) {
@@ -206,45 +170,158 @@ export default function CartPage() {
         return;
       }
 
-      // 주문 페이지로 이동
-      console.log("주문할 상품:", selectedItems);
-      // 주문 api 연동
-      // 결제 페이지로 이동
-      //window.location.href = "/payment";
+      // 각 상품에 대해 서버에 삭제 요청
+      const deletePromises = selectedItems.map((item) =>
+        removeFromCart(item.itemId, item.storeId)
+      );
+      const results = await Promise.all(deletePromises);
+
+      // 모든 삭제 요청이 성공적으로 처리되었는지 확인
+      const allSuccessful = results.every((success) => success);
+
+      if (allSuccessful) {
+        // 장바구니 데이터 다시 로드
+        await fetchCartItems();
+      } else {
+        alert("일부 상품 삭제에 실패했습니다. 다시 시도해주세요.");
+      }
+    } catch (error) {
+      console.error("선택 삭제 실패:", error);
+      alert("상품 삭제 중 오류가 발생했습니다.");
+    }
+  };
+
+  // 수량 변경 처리
+  const handleQuantityChange = async (itemId: number, newQuantity: number) => {
+    if (newQuantity < 1) return; // 최소 수량은 1
+
+    // 해당 상품이 속한 스토어 찾기
+    const storeGroup = cartItems.find((group) =>
+      group.data.cartItems.some((item) => item.itemId === itemId)
+    );
+
+    if (storeGroup) {
+      const storeId = storeGroup.data.storeId;
+
+      try {
+        // API를 통해 수량 변경
+        const success = await updateCartItemQuantity(
+          newQuantity,
+          storeId,
+          itemId
+        );
+        console.log("장바구니 수량 변경: ", success);
+        if (success) {
+          // UI 업데이트
+          setCartItems((prevItems) =>
+            prevItems.map((group) => ({
+              ...group,
+              data: {
+                ...group.data,
+                cartItems: group.data.cartItems.map((item) =>
+                  item.itemId === itemId
+                    ? { ...item, quantity: newQuantity }
+                    : item
+                ),
+              },
+            }))
+          );
+        }
+      } catch (error) {
+        console.error("수량 변경 실패:", error);
+      }
+    }
+  };
+
+  // 전체 선택 처리
+  const handleSelectAll = (selectAll: boolean) => {
+    setCartItems((prevItems) =>
+      prevItems.map((group) => ({
+        ...group,
+        data: {
+          ...group.data,
+          cartItems: group.data.cartItems.map((item) =>
+            item.itemType !== "DELETED"
+              ? { ...item, isSelected: selectAll }
+              : item
+          ),
+        },
+      }))
+    );
+  };
+
+  // 주문 핸들러
+  const handleCheckout = () => {
+    // 로그인 여부 확인 및 주문 처리
+    requireAuth(() => {
+      const selectedItems = cartItems.flatMap((group) =>
+        group.data.cartItems.filter(
+          (item) => item.isSelected && item.itemType !== "DELETED"
+        )
+      );
+
+      if (selectedItems.length === 0) {
+        alert("선택된 상품이 없습니다.");
+        return;
+      }
+
+      console.log("주문 처리:", selectedItems);
     });
   };
 
-  // 모든 아이템이 선택되었는지 확인
+  // 선택된 유효한 항목 가져오기
+  const selectedItems = cartItems.flatMap((group) =>
+    group.data.cartItems.filter(
+      (item) => item.itemType !== "DELETED" && item.isSelected
+    )
+  );
+
+  // 전체 선택 여부 확인 로직
+  const allItems = cartItems.flatMap((group) =>
+    group.data.cartItems.filter((item) => item.itemType !== "DELETED")
+  );
+
   const allSelected =
-    cartItems.length > 0 &&
-    cartItems
-      .filter((item) => !item.isSoldOut && !item.isDeleted)
-      .every((item) => item.isSelected);
+    allItems.length > 0 && allItems.every((item) => item.isSelected);
 
   // 선택된 유효한 항목 개수
-  const selectedValidItemCount = cartItems.filter(
-    (item) => item.isSelected && !item.isSoldOut && !item.isDeleted
-  ).length;
+  const selectedValidItemCount = selectedItems.length;
+
+  // 스토어 장바구니 비우기 처리
+  const handleClearStore = async (storeId: number) => {
+    try {
+      const confirmed = window.confirm(
+        "이 스토어의 모든 상품을 장바구니에서 비우시겠습니까?"
+      );
+      if (!confirmed) return;
+
+      // API를 통해 스토어 장바구니 비우기
+      const success = await clearStoreCart(storeId);
+
+      if (success) {
+        // 장바구니 데이터 다시 로드
+        await fetchCartItems();
+      }
+    } catch (error) {
+      console.error("스토어 장바구니 비우기 실패:", error);
+    }
+  };
 
   // 로딩 중 표시
   if (isLoading) {
-    return (
-      <div className="max-w-4xl mx-auto px-4 py-8 flex justify-center items-center min-h-[50vh]">
-        <p className="text-gray-500">로딩 중...</p>
-      </div>
-    );
+    return <div className="text-center py-8">장바구니 로딩 중...</div>;
   }
 
   // 장바구니에 상품이 없는 경우
   if (cartItems.length === 0) {
     return (
-      <div className="max-w-4xl mx-auto px-4 py-8">
+      <div className="max-w-4xl mx-auto py-8 text-center">
         <h1 className="text-2xl font-bold mb-6">장바구니</h1>
-        <div className="text-center py-16 border-y">
-          <p className="text-gray-500 mb-6">장바구니에 담긴 상품이 없습니다.</p>
+        <div className="py-12">
+          <p className="mb-4 text-gray-500">장바구니에 상품이 없습니다.</p>
           <Link
             href="/"
-            className="inline-flex items-center px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-colors"
+            className="inline-block px-6 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
           >
             쇼핑 계속하기
           </Link>
@@ -267,12 +344,7 @@ export default function CartPage() {
             onChange={() => handleSelectAll(!allSelected)}
           />
           <label className="text-sm font-medium">
-            전체선택 ({selectedValidItemCount}/
-            {
-              cartItems.filter((item) => !item.isSoldOut && !item.isDeleted)
-                .length
-            }
-            )
+            전체선택 ({selectedValidItemCount}/{allItems.length})
           </label>
         </div>
         <button
@@ -285,14 +357,15 @@ export default function CartPage() {
       </div>
 
       {/* 스토어별 장바구니 그룹 */}
-      {storeGroups.map((storeGroup) => (
+      {cartItems.map((storeGroup) => (
         <StoreCartGroup
-          key={storeGroup.storeId}
+          key={storeGroup.data.storeId}
           storeGroup={storeGroup}
           onSelectItem={handleSelectItem}
           onSelectStore={handleSelectStore}
           onRemoveItem={handleRemoveItem}
           onQuantityChange={handleQuantityChange}
+          onClearStore={handleClearStore}
         />
       ))}
 
@@ -301,8 +374,8 @@ export default function CartPage() {
 
       {/* 로그인 유도 모달 */}
       <LoginPromptModal
-        isOpen={showLoginPrompt}
-        onClose={() => setShowLoginPrompt(false)}
+        isOpen={showLoginModal}
+        onClose={() => setShowLoginModal(false)}
       />
     </div>
   );

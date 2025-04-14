@@ -73,23 +73,28 @@ export async function getAddress(addressId: number) {
 
 // 고객 주소지 수정
 export async function updateAddress(addressId: number, address: Address) {
-  const response = await fetch(
-    `${process.env.NEXT_PUBLIC_API_URL}/api/users/customers/addresses/${addressId}`,
-    {
-      method: "PUT",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(address),
-      credentials: "include",
-    }
-  );
+  try {
+    const response = await fetch(
+      `${process.env.NEXT_PUBLIC_API_URL}/api/users/customers/addresses/${addressId}`,
+      {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(address),
+        credentials: "include",
+      }
+    );
 
-  if (!response.ok) {
+    if (!response.ok) {
+      throw new Error("주소지 수정에 실패했습니다.");
+    }
+
+    return response.json();
+  } catch (error) {
+    console.error("주소지 수정 오류:", error);
     throw new Error("주소지 수정에 실패했습니다.");
   }
-
-  return response.json();
 }
 
 // 고객 주소지 삭제

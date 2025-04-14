@@ -186,3 +186,18 @@ export async function changeNickname(newName: string): Promise<void> {
     throw new Error("닉네임 변경에 실패했습니다.");
   }
 }
+
+export async function Postlogout() {
+  const response = await fetch(
+    `${process.env.NEXT_PUBLIC_API_URL}/api/auth/customers/logout`,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+    }
+  );
+  if (!response.ok) {
+    throw new Error("로그아웃 실패");
+  }
+}

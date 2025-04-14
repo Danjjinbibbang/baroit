@@ -1,14 +1,14 @@
 "use client";
 
 import { Minus, Plus, X } from "lucide-react";
-import { CartItem as CartItemType } from "@/types/cart";
+import { UiCartItem as CartItemType } from "@/types/cart";
 import { calculateDiscountPrice } from "@/utils/cart";
 
 interface CartItemProps {
   item: CartItemType;
-  onSelectItem: (id: string) => void;
-  onRemoveItem: (id: string) => void;
-  onQuantityChange: (id: string, quantity: number) => void;
+  onSelectItem: (id: number) => void;
+  onRemoveItem: (id: number) => void;
+  onQuantityChange: (id: number, quantity: number) => void;
 }
 
 export default function CartItem({
@@ -32,7 +32,7 @@ export default function CartItem({
           type="checkbox"
           className="w-5 h-5 mt-1 mr-2 accent-blue-500"
           checked={item.isSelected}
-          onChange={() => onSelectItem(item.id)}
+          onChange={() => onSelectItem(item.itemId)}
           disabled={isDisabled}
         />
 
@@ -61,7 +61,7 @@ export default function CartItem({
         <div className="flex-grow">
           <p className="text-sm text-gray-500 mb-1">{item.storeName}</p>
           <h3 className="font-medium mb-1">
-            {item.name}
+            {item.itemName}
             {isLowStock && !isDisabled && (
               <span className="ml-2 text-sm text-red-500 font-normal">
                 품절 임박: {item.stock}개 남음
@@ -102,7 +102,7 @@ export default function CartItem({
                     ? "bg-gray-200 text-gray-400"
                     : "bg-gray-100 hover:bg-gray-200"
                 }`}
-                onClick={() => onQuantityChange(item.id, item.quantity - 1)}
+                onClick={() => onQuantityChange(item.itemId, item.quantity - 1)}
                 disabled={item.quantity <= 1 || isDisabled}
               >
                 <Minus className="w-4 h-4" />
@@ -114,7 +114,7 @@ export default function CartItem({
                     ? "bg-gray-200 text-gray-400"
                     : "bg-gray-100 hover:bg-gray-200"
                 }`}
-                onClick={() => onQuantityChange(item.id, item.quantity + 1)}
+                onClick={() => onQuantityChange(item.itemId, item.quantity + 1)}
                 disabled={item.quantity >= item.stock || isDisabled}
               >
                 <Plus className="w-4 h-4" />
@@ -122,7 +122,7 @@ export default function CartItem({
             </div>
             <button
               className="ml-2 text-gray-400 hover:text-gray-600"
-              onClick={() => onRemoveItem(item.id)}
+              onClick={() => onRemoveItem(item.itemId)}
             >
               <X className="w-5 h-5" />
             </button>
