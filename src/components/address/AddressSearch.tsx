@@ -26,86 +26,89 @@ export function AddressSearch({
   const [isScriptLoaded, setIsScriptLoaded] = useState(false);
 
   useEffect(() => {
-    // 이미 스크립트가 로드되어 있는지 확인
-    if (window.daum && window.daum.Postcode) {
-      setIsScriptLoaded(true);
-      return;
-    }
+    const loadScripts = async () => {
+      const loadScript = (src: string) =>
+        new Promise<void>((resolve, reject) => {
+          const script = document.createElement("script");
+          script.src = src;
+          script.async = true;
+          script.onload = () => resolve();
+          script.onerror = () => reject();
+          document.head.appendChild(script);
+        });
 
-    // 다음 우편번호 스크립트 로드
-    const script = document.createElement("script");
-    script.src =
-      "//t1.daumcdn.net/mapjsapi/bundle/postcode/prod/postcode.v2.js";
-    script.async = true;
-    script.onload = () => setIsScriptLoaded(true);
-    document.head.appendChild(script);
+      try {
+        // 1. 다음 우편번호
+        await loadScript(
+          "//t1.daumcdn.net/mapjsapi/bundle/postcode/prod/postcode.v2.js"
+        );
 
-    return () => {
-      // 컴포넌트 언마운트 시 스크립트 제거는 하지 않음 (다른 컴포넌트에서 재사용 가능)
+        // 2. 카카오 지도 + services + autoload false
+        await loadScript(
+          `//dapi.kakao.com/v2/maps/sdk.js?appkey=${process.env.NEXT_PUBLIC_KAKAO_APP_KEY_JAVASCRIPT}&autoload=false&libraries=services`
+        );
+
+        // 3. kakao.maps.load 호출 전에 준비 상태 체크
+        const waitForKakao = () =>
+          new Promise<void>((resolve) => {
+            const interval = setInterval(() => {
+              if (window.kakao && window.kakao.maps && window.kakao.maps.load) {
+                clearInterval(interval);
+                resolve();
+              }
+            }, 100);
+          });
+
+        await waitForKakao();
+
+        // 3. kakao.maps 로드 (Geocoder 포함)
+        window.kakao.maps.load(() => {
+          console.log("카카오맵 services 로드 완료");
+          setIsScriptLoaded(true);
+        });
+      } catch (e) {
+        console.error("스크립트 로딩 실패", e);
+      }
     };
+
+    loadScripts();
   }, []);
 
   const openAddressSearch = () => {
     if (!isScriptLoaded) {
-      console.error("다음 우편번호 스크립트가 로드되지 않았습니다.");
+      console.error("카카오맵 스크립트가 아직 로드되지 않았습니다.");
       return;
     }
 
     new window.daum.Postcode({
       oncomplete: (data: any) => {
-        console.log("선택한 주소 데이터:", data);
+        const addressToSearch = data.roadAddress || data.jibunAddress;
 
-        // 좌표 정보 가져오기 (카카오 맵 API 필요)
-        if (window.kakao && window.kakao.maps) {
-          const geocoder = new window.kakao.maps.services.Geocoder();
+        const geocoder = new window.kakao.maps.services.Geocoder();
 
-          // 도로명 주소 또는 지번 주소로 좌표 검색
-          const addressToSearch = data.roadAddress || data.jibunAddress;
-
-          geocoder.addressSearch(
-            addressToSearch,
-            (result: any, status: any) => {
-              if (status === window.kakao.maps.services.Status.OK) {
-                const coords = result[0];
-
-                const addressData: AddressData = {
-                  roadAddress: data.roadAddress || "",
-                  jibunAddress: data.jibunAddress || "",
-                  zonecode: data.zonecode || "",
-                  buildingName: data.buildingName || "",
-                  latitude: parseFloat(coords.y),
-                  longitude: parseFloat(coords.x),
-                };
-
-                onSelectAddress(addressData);
-              } else {
-                // 좌표 변환 실패 시 좌표 없이 주소 정보만 전달
-                const addressData: AddressData = {
-                  roadAddress: data.roadAddress || "",
-                  jibunAddress: data.jibunAddress || "",
-                  zonecode: data.zonecode || "",
-                  buildingName: data.buildingName || "",
-                };
-
-                onSelectAddress(addressData);
-                console.error("주소-좌표 변환 실패:", status);
-              }
-            }
-          );
-        } else {
-          // 카카오 맵 API가 없는 경우 좌표 없이 주소 정보만 전달
-          const addressData: AddressData = {
-            roadAddress: data.roadAddress || "",
-            jibunAddress: data.jibunAddress || "",
-            zonecode: data.zonecode || "",
-            buildingName: data.buildingName || "",
-          };
-
-          onSelectAddress(addressData);
-          console.warn(
-            "카카오 맵 API가 로드되지 않아 좌표 정보를 가져올 수 없습니다."
-          );
-        }
+        geocoder.addressSearch(addressToSearch, (result: any, status: any) => {
+          if (status === window.kakao.maps.services.Status.OK) {
+            const coords = result[0];
+            const addressData: AddressData = {
+              roadAddress: data.roadAddress || "",
+              jibunAddress: data.jibunAddress || "",
+              zonecode: data.zonecode || "",
+              buildingName: data.buildingName || "",
+              latitude: parseFloat(coords.y),
+              longitude: parseFloat(coords.x),
+            };
+            onSelectAddress(addressData);
+          } else {
+            console.warn("좌표 변환 실패:", status);
+            const addressData: AddressData = {
+              roadAddress: data.roadAddress || "",
+              jibunAddress: data.jibunAddress || "",
+              zonecode: data.zonecode || "",
+              buildingName: data.buildingName || "",
+            };
+            onSelectAddress(addressData);
+          }
+        });
       },
       width: "100%",
       height: "500px",
@@ -114,10 +117,10 @@ export function AddressSearch({
 
   return (
     <Button
-      type="button"
       onClick={openAddressSearch}
       className={className}
       disabled={!isScriptLoaded}
+      type="button"
     >
       {buttonLabel}
     </Button>

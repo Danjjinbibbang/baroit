@@ -1,107 +1,11 @@
 "use client";
 
 import React, { useState } from "react";
-import {
-  ChevronDown,
-  ChevronUp,
-  Plus,
-  Minus,
-  CreditCard,
-  ShoppingBag,
-} from "lucide-react";
-import Link from "next/link";
+import { ChevronDown, ChevronUp, Plus, Minus, ShoppingBag } from "lucide-react";
+import { Product } from "@/types/product";
+import { addToCart } from "@/utils/cart";
 
-// 상품 데이터 타입 정의
-interface ProductOption {
-  name: string;
-  values: string[];
-}
-
-interface Product {
-  id: string;
-  name: string;
-  storeName: string;
-  price: number;
-  discountRate?: number;
-  mainImage: string;
-  images?: string[];
-  certifications?: string[];
-  description: string;
-  notice?: string;
-  detailDescription: string;
-  returnPolicy: string;
-  minPurchaseQuantity: number;
-  maxPurchaseQuantity: number;
-  unit: string;
-  options: ProductOption[];
-}
-
-// 임시 상품 데이터
-const productData: Product = {
-  id: "1",
-  name: "무농약 당근 (1kg 내외)",
-  storeName: "산지직송 농장",
-  price: 6900,
-  discountRate: 10,
-  mainImage:
-    "https://images.unsplash.com/photo-1598170845058-32b9d6a5d4c4?q=80&w=1974&auto=format&fit=crop&ixlib=rb-4.0.3",
-  images: [
-    "https://images.unsplash.com/photo-1590165482129-1b8b27698780?q=80&w=1974&auto=format&fit=crop&ixlib=rb-4.0.3",
-    "https://images.unsplash.com/photo-1633204339691-9d3647204d39?q=80&w=1974&auto=format&fit=crop&ixlib=rb-4.0.3",
-  ],
-  certifications: ["무농약", "친환경"],
-  description:
-    "신선하고 아삭한 무농약 당근입니다. 산지직송으로 더욱 신선하게 배송됩니다.",
-  notice:
-    "천재지변으로 인한 작황에 따라 일부 상품의 크기 및 중량의 차이가 있을 수 있습니다.",
-  detailDescription: `# 상품 상세 정보
-
-## 상품 특징
-- 무농약 재배 방식으로 재배된 건강한 당근입니다.
-- 아삭한 식감과 단맛이 특징입니다.
-- 산지에서 직접 수확 후 배송되어 신선도가 높습니다.
-
-## 보관 방법
-- 냉장 보관하시면 더욱 오래 신선하게 드실 수 있습니다.
-- 흙이 묻어있는 경우 바로 세척하지 마시고 필요할 때 세척해서 드세요.
-
-## 원산지
-- 국내산 (강원도 횡성)`,
-  returnPolicy: `# 교환 및 반품 안내
-
-## 교환 및 반품이 가능한 경우
-- 상품을 공급받은 날로부터 7일 이내에 신청 가능합니다.
-- 상품이 표시된 정보와 상이할 경우 공급받은 날로부터 3개월 이내, 그 사실을 안 날로부터 30일 이내에 신청 가능합니다.
-
-## 교환 및 반품이 불가능한 경우
-- 신선식품의 특성상 고객님의 단순변심에 의한 교환 및 반품은 불가능합니다.
-- 고객님의 책임 있는 사유로 상품이 훼손된 경우 교환 및 반품이 불가능합니다.
-
-## 교환 및 반품 절차
-- 고객센터(1234-5678)로 연락하여 교환/반품 신청을 해주세요.
-- 담당자의 안내에 따라 상품을 보내주시면 확인 후 처리해 드립니다.`,
-  minPurchaseQuantity: 1,
-  maxPurchaseQuantity: 10,
-  unit: "개",
-  options: [
-    {
-      name: "크기",
-      values: ["소", "중", "대"],
-    },
-  ],
-};
-
-interface ProductDetailProps {
-  id: string;
-}
-
-export default function ProductDetail({ id }: ProductDetailProps) {
-  if (id !== productData.id) {
-    console.log(
-      "의미없는 콘솔이다. api 명세에 따라서 함수 만들고 호출해서 id값 받아도록 해야 함"
-    );
-  }
-
+export default function ProductDetail({ id }: { id: number }) {
   const [expandedSections, setExpandedSections] = useState<{
     detail: boolean;
     returnPolicy: boolean;
@@ -110,13 +14,17 @@ export default function ProductDetail({ id }: ProductDetailProps) {
     returnPolicy: false,
   });
 
-  const [selectedOptions, setSelectedOptions] = useState<{
-    [key: string]: string;
-  }>({});
+  const [quantity, setQuantity] = useState(
+    productData.minPurchaseQuantity || 1
+  );
+  const [selectedOptions, setSelectedOptions] = useState<
+    Record<string, string>
+  >({});
 
-  const [quantity, setQuantity] = useState(productData.minPurchaseQuantity);
   const [showPurchaseModal, setShowPurchaseModal] = useState(false);
-  const [selectedImage, setSelectedImage] = useState(productData.mainImage);
+  const [selectedImage, setSelectedImage] = useState<string>(
+    productData.imageKey || ""
+  );
 
   // 섹션 토글 핸들러
   const toggleSection = (section: "detail" | "returnPolicy") => {
@@ -126,18 +34,22 @@ export default function ProductDetail({ id }: ProductDetailProps) {
     }));
   };
 
+  // 최소, 최대 구매 수량 제한
+  const minQuantity = productData.minPurchaseQuantity || 1;
+  const maxQuantity = productData.maxPurchaseQuantity || 10;
+
   // 수량 변경 핸들러
-  const changeQuantity = (amount: number) => {
-    const newQuantity = quantity + amount;
-    if (
-      newQuantity >= productData.minPurchaseQuantity &&
-      newQuantity <= productData.maxPurchaseQuantity
-    ) {
+  const handleQuantityChange = (newQuantity: number) => {
+    if (newQuantity < minQuantity) {
+      setQuantity(minQuantity);
+    } else if (newQuantity > maxQuantity) {
+      setQuantity(maxQuantity);
+    } else {
       setQuantity(newQuantity);
     }
   };
 
-  // 옵션 선택 핸들러
+  // 옵션 변경 핸들러
   const handleOptionChange = (optionName: string, value: string) => {
     setSelectedOptions((prev) => ({
       ...prev,
@@ -145,10 +57,12 @@ export default function ProductDetail({ id }: ProductDetailProps) {
     }));
   };
 
-  // 할인가 계산
+  // 가격 계산
+  const originalPrice = productData.originalPrice || 0;
+  const sellingPrice = productData.sellingPrice || 0;
   const discountedPrice = productData.discountRate
-    ? Math.floor(productData.price * (1 - productData.discountRate / 100))
-    : productData.price;
+    ? Math.floor(sellingPrice * (1 - productData.discountRate / 100))
+    : sellingPrice;
 
   // 총 가격 계산
   const totalPrice = discountedPrice * quantity;
@@ -170,14 +84,18 @@ export default function ProductDetail({ id }: ProductDetailProps) {
             <div className="flex gap-2 mt-2">
               <div
                 className={`w-20 h-20 rounded-md overflow-hidden cursor-pointer ${
-                  selectedImage === productData.mainImage
+                  selectedImage === productData.imageKey
                     ? "border-2 border-blue-500"
                     : "border border-gray-200"
                 }`}
-                onClick={() => setSelectedImage(productData.mainImage)}
+                onClick={() => {
+                  if (productData.imageKey) {
+                    setSelectedImage(productData.imageKey);
+                  }
+                }}
               >
                 <img
-                  src={productData.mainImage}
+                  src={productData.imageKey}
                   alt="메인 이미지"
                   className="w-full h-full object-cover"
                 />
@@ -216,7 +134,7 @@ export default function ProductDetail({ id }: ProductDetailProps) {
                   {productData.discountRate}%
                 </span>
                 <span className="text-gray-400 line-through">
-                  {productData.price.toLocaleString()}원
+                  {originalPrice.toLocaleString()}원
                 </span>
               </div>
             )}
@@ -348,19 +266,19 @@ export default function ProductDetail({ id }: ProductDetailProps) {
               {productData.options.map((option, index) => (
                 <div key={index} className="mb-4">
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    {option.name}
+                    {option.optionName}
                   </label>
                   <select
                     className="w-full p-2 border rounded-md"
-                    value={selectedOptions[option.name] || ""}
+                    value={selectedOptions[option.optionName] || ""}
                     onChange={(e) =>
-                      handleOptionChange(option.name, e.target.value)
+                      handleOptionChange(option.optionName, e.target.value)
                     }
                   >
                     <option value="">선택하세요</option>
                     {option.values.map((value, idx) => (
-                      <option key={idx} value={value}>
-                        {value}
+                      <option key={idx} value={value.value}>
+                        {value.value}
                       </option>
                     ))}
                   </select>
@@ -377,32 +295,30 @@ export default function ProductDetail({ id }: ProductDetailProps) {
                 <div className="flex items-center border rounded-md overflow-hidden">
                   <button
                     className="px-3 py-2 bg-gray-100 hover:bg-gray-200"
-                    onClick={() => changeQuantity(-1)}
-                    disabled={quantity <= productData.minPurchaseQuantity}
+                    onClick={() => handleQuantityChange(quantity - 1)}
+                    disabled={quantity <= minQuantity}
                   >
                     <Minus className="w-4 h-4" />
                   </button>
                   <input
                     type="number"
-                    className="w-16 text-center border-x"
+                    className="px-3 py-2 w-16 text-center border-t border-b outline-none"
                     value={quantity}
                     onChange={(e) => {
                       const val = parseInt(e.target.value);
                       if (
                         !isNaN(val) &&
-                        val >= productData.minPurchaseQuantity &&
-                        val <= productData.maxPurchaseQuantity
+                        val >= minQuantity &&
+                        val <= maxQuantity
                       ) {
-                        setQuantity(val);
+                        handleQuantityChange(val);
                       }
                     }}
-                    min={productData.minPurchaseQuantity}
-                    max={productData.maxPurchaseQuantity}
                   />
                   <button
                     className="px-3 py-2 bg-gray-100 hover:bg-gray-200"
-                    onClick={() => changeQuantity(1)}
-                    disabled={quantity >= productData.maxPurchaseQuantity}
+                    onClick={() => handleQuantityChange(quantity + 1)}
+                    disabled={quantity >= maxQuantity}
                   >
                     <Plus className="w-4 h-4" />
                   </button>
@@ -419,16 +335,43 @@ export default function ProductDetail({ id }: ProductDetailProps) {
 
               {/* 구매 및 장바구니 버튼 */}
               <div className="flex gap-2">
-                <Link
-                  className="flex-1 py-3 bg-gray-100 text-gray-800 font-medium rounded-md hover:bg-gray-200 transition-colors flex items-center justify-center"
-                  href="/cart"
+                <button
+                  className="flex-1 py-3 bg-blue-500 text-gray-800 font-medium rounded-md transition-colors flex items-center justify-center"
+                  onClick={async () => {
+                    // 옵션 선택 여부 확인
+                    const optionsSelected = productData.options.every(
+                      (option) => selectedOptions[option.optionName]
+                    );
+
+                    if (!optionsSelected) {
+                      alert("모든 옵션을 선택해주세요.");
+                      return;
+                    }
+
+                    // 선택한 옵션 및 수량 정보로 장바구니에 추가
+                    const success = await addToCart(
+                      {
+                        itemId: productData.id,
+                        itemName: productData.name,
+                        itemType: "VARIANT",
+                        imageKey: productData.imageKey || "",
+                        originalPrice: productData.originalPrice,
+                        sellingPrice: productData.sellingPrice,
+                        quantity: quantity,
+                      },
+                      productData.storeId
+                    );
+
+                    if (success) {
+                      // 장바구니 추가 성공 시 장바구니 페이지로 이동
+                      window.location.href = "/cart";
+                    } else {
+                      alert("장바구니 추가에 실패했습니다. 다시 시도해주세요.");
+                    }
+                  }}
                 >
                   <ShoppingBag className="w-5 h-5 mr-1" />
                   장바구니
-                </Link>
-                <button className="flex-1 py-3 bg-blue-500 text-white font-medium rounded-md hover:bg-blue-600 transition-colors flex items-center justify-center">
-                  <CreditCard className="w-5 h-5 mr-1" />
-                  구매하기
                 </button>
               </div>
             </div>
@@ -438,3 +381,94 @@ export default function ProductDetail({ id }: ProductDetailProps) {
     </div>
   );
 }
+
+// 임시 상품 데이터
+const productData: Product = {
+  id: 1,
+  storeId: 1,
+  name: "무농약 당근 (1kg 내외)",
+  storeName: "산지직송 농장",
+  registeredId: "P123456",
+  fulfillmentMethod: "DELIVERY_ONLY",
+  hasOption: true,
+  originalPrice: 6900,
+  sellingPrice: 6210,
+  discountRate: 10,
+  stock: 100,
+  displayCategoryId: 1,
+  storeCategoryIds: [1],
+  options: [
+    {
+      optionId: 1,
+      optionName: "크기",
+      values: [
+        { optionValueId: 1, value: "소" },
+        { optionValueId: 2, value: "중" },
+        { optionValueId: 3, value: "대" },
+      ],
+    },
+  ],
+  variants: [
+    {
+      id: 1,
+      displayName: "소",
+      originalPrice: 6900,
+      sellingPrice: 6210,
+      stock: 30,
+    },
+    {
+      id: 2,
+      displayName: "중",
+      originalPrice: 7900,
+      sellingPrice: 7110,
+      stock: 40,
+    },
+    {
+      id: 3,
+      displayName: "대",
+      originalPrice: 8900,
+      sellingPrice: 8010,
+      stock: 30,
+    },
+  ],
+  imageKey:
+    "https://images.unsplash.com/photo-1598170845058-32b9d6a5d4c4?q=80&w=1974&auto=format&fit=crop&ixlib=rb-4.0.3",
+  images: [
+    "https://images.unsplash.com/photo-1590165482129-1b8b27698780?q=80&w=1974&auto=format&fit=crop&ixlib=rb-4.0.3",
+    "https://images.unsplash.com/photo-1633204339691-9d3647204d39?q=80&w=1974&auto=format&fit=crop&ixlib=rb-4.0.3",
+  ],
+  certifications: ["무농약", "친환경"],
+  description:
+    "신선하고 아삭한 무농약 당근입니다. 산지직송으로 더욱 신선하게 배송됩니다.",
+  notice:
+    "천재지변으로 인한 작황에 따라 일부 상품의 크기 및 중량의 차이가 있을 수 있습니다.",
+  detailDescription: `# 상품 상세 정보
+
+## 상품 특징
+- 무농약 재배 방식으로 재배된 건강한 당근입니다.
+- 아삭한 식감과 단맛이 특징입니다.
+- 산지에서 직접 수확 후 배송되어 신선도가 높습니다.
+
+## 보관 방법
+- 냉장 보관하시면 더욱 오래 신선하게 드실 수 있습니다.
+- 흙이 묻어있는 경우 바로 세척하지 마시고 필요할 때 세척해서 드세요.
+
+## 원산지
+- 국내산 (강원도 횡성)`,
+  returnPolicy: `# 교환 및 반품 안내
+
+## 교환 및 반품이 가능한 경우
+- 상품을 공급받은 날로부터 7일 이내에 신청 가능합니다.
+- 상품이 표시된 정보와 상이할 경우 공급받은 날로부터 3개월 이내, 그 사실을 안 날로부터 30일 이내에 신청 가능합니다.
+
+## 교환 및 반품이 불가능한 경우
+- 신선식품의 특성상 고객님의 단순변심에 의한 교환 및 반품은 불가능합니다.
+- 고객님의 책임 있는 사유로 상품이 훼손된 경우 교환 및 반품이 불가능합니다.
+
+## 교환 및 반품 절차
+- 고객센터(1234-5678)로 연락하여 교환/반품 신청을 해주세요.
+- 담당자의 안내에 따라 상품을 보내주시면 확인 후 처리해 드립니다.`,
+  minPurchaseQuantity: 1,
+  maxPurchaseQuantity: 10,
+  unit: "개",
+};

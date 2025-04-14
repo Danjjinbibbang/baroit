@@ -1,10 +1,9 @@
 "use client";
 
-import { CartItem } from "@/types/cart";
-import { calculateDiscountPrice } from "@/utils/cart";
+import { StoreCartGroupType } from "@/types/cart";
 
 interface CartSummaryProps {
-  cartItems: CartItem[];
+  cartItems: StoreCartGroupType[];
   onCheckout: () => void;
 }
 
@@ -12,72 +11,60 @@ export default function CartSummary({
   cartItems,
   onCheckout,
 }: CartSummaryProps) {
-  // 유효하고 선택된 아이템만 필터링
-  const validSelectedItems = cartItems.filter(
-    (item) => item.isSelected && !item.isSoldOut && !item.isDeleted
+  // 선택된 상품만 계산
+  const selectedItems = cartItems.flatMap((group) =>
+    group.data.cartItems.filter(
+      (item) => item.isSelected && item.itemType !== "DELETED"
+    )
   );
 
-  // 선택된 아이템 개수
-  const selectedItemCount = validSelectedItems.length;
-
-  // 원래 가격 총합
-  const originalPrice = validSelectedItems.reduce(
-    (sum, item) => sum + item.price * item.quantity,
+  // 총 상품 금액
+  const totalOriginalPrice = selectedItems.reduce(
+    (sum, item) => sum + item.originalPrice * item.quantity,
     0
   );
 
-  // 할인 적용된 가격 총합
-  const totalPrice = validSelectedItems.reduce(
+  // 총 할인 금액
+  const totalDiscountPrice = selectedItems.reduce(
     (sum, item) =>
-      sum +
-      calculateDiscountPrice(item.price, item.discountRate) * item.quantity,
+      sum + (item.originalPrice - item.sellingPrice) * item.quantity,
     0
   );
 
-  // 총 할인액
-  const totalDiscount = originalPrice - totalPrice;
+  // 최종 결제 금액
+  const totalPaymentPrice = selectedItems.reduce(
+    (sum, item) => sum + item.sellingPrice * item.quantity,
+    0
+  );
 
   return (
-    <div className="sticky bottom-0 bg-gray-50 shadow-md p-6">
-      <div className="max-w-4xl mx-auto">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div className="space-y-3">
-            <div className="flex justify-between items-center">
-              <span className="text-gray-600">상품금액</span>
-              <span className="font-medium">
-                {originalPrice.toLocaleString()}원
-              </span>
-            </div>
-            <div className="flex justify-between items-center">
-              <span className="text-gray-600">할인금액</span>
-              <span className="text-red-500 font-medium">
-                -{totalDiscount.toLocaleString()}원
-              </span>
-            </div>
-            <div className="flex justify-between items-center pt-3 border-t">
-              <span className="text-lg font-medium">총 결제예정금액</span>
-              <span className="text-xl font-bold text-blue-600">
-                {totalPrice.toLocaleString()}원
-              </span>
-            </div>
-          </div>
-
-          <div className="flex items-center justify-end">
-            <button
-              className={`w-full md:w-auto px-6 py-3 rounded-md text-white text-lg font-medium ${
-                selectedItemCount > 0
-                  ? "bg-blue-500 hover:bg-blue-600"
-                  : "bg-gray-400 cursor-not-allowed"
-              } transition-colors`}
-              disabled={selectedItemCount === 0}
-              onClick={onCheckout}
-            >
-              {selectedItemCount > 0
-                ? `주문하기 (${selectedItemCount})`
-                : "상품을 선택해주세요"}
-            </button>
-          </div>
+    <div className="fixed bottom-0 left-0 right-0 bg-white border-t shadow-md">
+      <div className="max-w-4xl mx-auto p-4">
+        <div className="flex justify-between items-center mb-2">
+          <span className="text-gray-600">총 상품금액</span>
+          <span>{totalOriginalPrice.toLocaleString()}원</span>
         </div>
+        <div className="flex justify-between items-center mb-2">
+          <span className="text-gray-600">총 할인금액</span>
+          <span className="text-red-500">
+            -{totalDiscountPrice.toLocaleString()}원
+          </span>
+        </div>
+        <div className="flex justify-between items-center pt-2 border-t mt-2">
+          <span className="font-medium">총 결제예정금액</span>
+          <span className="font-bold text-blue-600 text-xl">
+            {totalPaymentPrice.toLocaleString()}원
+          </span>
+        </div>
+        <button
+          className="w-full mt-4 bg-blue-500 text-white py-3 rounded-md hover:bg-blue-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          onClick={onCheckout}
+          disabled={selectedItems.length === 0}
+        >
+          {selectedItems.length > 0
+            ? `${selectedItems.length}개 상품 주문하기`
+            : "상품을 선택해주세요"}
+        </button>
       </div>
     </div>
   );
