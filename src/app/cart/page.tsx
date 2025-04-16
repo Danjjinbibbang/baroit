@@ -13,6 +13,7 @@ import StoreCartGroup from "@/components/cart/StoreCartGroup";
 import CartSummary from "@/components/cart/CartSummary";
 import LoginPromptModal from "@/components/cart/LoginPromptModal";
 import { useAuthStore } from "@/zustand/auth";
+import { useRouter } from "next/navigation";
 
 // 장바구니 데이터에 UI 상태를 추가하는 함수
 const addUiStateToCartItems = (
@@ -43,6 +44,7 @@ export default function CartPage() {
   const [cartItems, setCartItems] = useState<StoreCartGroupType[]>([]);
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const router = useRouter();
 
   // 초기 로드 시 전체 장바구니 조회
   const fetchCartItems = async () => {
@@ -264,6 +266,35 @@ export default function CartPage() {
         alert("선택된 상품이 없습니다.");
         return;
       }
+      // 주문 api 연동할 것 -> 아직 주문 api가 없음
+      // 주문 api 성공 시 -> 결제 창으로 넘어가도록 수정할 것
+      // 임의로 그냥 결제창으로 넘어가도록 함 /payment
+      // 결제창으로 가격을 넘겨줘야함
+      // 총 금액 계산
+      const totalAmount = selectedItems.reduce(
+        (sum, item) => sum + item.sellingPrice * item.quantity,
+        0
+      );
+
+      // 주문명 생성
+      const orderName =
+        selectedItems.length > 0
+          ? `${selectedItems[0].itemName} ${
+              selectedItems.length > 1 ? `외 ${selectedItems.length - 1}건` : ""
+            }`
+          : "장바구니 상품";
+
+      // 주문 api 연동할 것 -> 아직 주문 api가 없음
+      // 주문 api 성공 시 -> 결제 창으로 넘어가도록 수정할 것
+
+      console.log("주문 처리:", selectedItems);
+
+      // 결제 페이지로 이동하면서 값 전달
+      router.push(
+        `/payment?amount=${totalAmount}&orderName=${encodeURIComponent(
+          orderName
+        )}`
+      );
 
       console.log("주문 처리:", selectedItems);
     });
