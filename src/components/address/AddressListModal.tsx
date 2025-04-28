@@ -11,27 +11,27 @@ import { Button } from "@/components/ui/button";
 import { Address } from "@/types/address";
 import { Home, Building2, Trash2, Edit2, Plus, Star } from "lucide-react";
 import AddressFormModal from "./AddressFormModal";
-import {
-  getAddresses,
-  deleteAddress,
-  setDefaultAddress,
-} from "@/utils/address";
+import { deleteAddress } from "@/utils/address";
+import { useAddressStore } from "@/zustand/address";
 
 interface AddressListModalProps {
   isOpen: boolean;
   onClose: () => void;
   customerId: number;
-  onDefaultAddressChange: (road: string) => void; // 콜백 함수 추가
 }
 
 export default function AddressListModal({
   isOpen,
   onClose,
   customerId,
-  onDefaultAddressChange,
 }: AddressListModalProps) {
-  const [addresses, setAddresses] = useState<Address[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const {
+    addresses,
+    isLoading,
+    fetchAddresses,
+    setDefaultAddress,
+    updateAddressList,
+  } = useAddressStore();
   const [isFormModalOpen, setIsFormModalOpen] = useState(false);
   const [selectedAddress, setSelectedAddress] = useState<Address | null>(null);
   const [isSettingDefault, setIsSettingDefault] = useState(false);
@@ -40,52 +40,17 @@ export default function AddressListModal({
     if (isOpen) {
       fetchAddresses();
     }
-  }, [isOpen]);
-
-  const fetchAddresses = async () => {
-    setIsLoading(true);
-    try {
-      // getAddresses 유틸 함수 사용
-      const response = await getAddresses();
-      console.log("주소 API 응답:", response);
-
-      let addressList: Address[] = [];
-
-      // response.data.addresses 구조 처리
-      if (response && response.data && Array.isArray(response.data.addresses)) {
-        addressList = response.data.addresses;
-      } else if (response && Array.isArray(response)) {
-        // 혹시 배열로 바로 응답이 오는 경우도 처리
-        addressList = response;
-      } else {
-        console.error("예상치 못한 API 응답 형식:", response);
-        addressList = [];
-      }
-
-      setAddresses(addressList);
-
-      // 기본 배송지 찾기
-      const defaultAddress = addressList.find((addr) => addr.isDefault);
-      if (defaultAddress) {
-        // 상위 컴포넌트에 알리기
-        onDefaultAddressChange(defaultAddress.road);
-      }
-    } catch (error) {
-      console.error("주소 목록 조회 실패:", error);
-      setAddresses([]);
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  }, [isOpen, fetchAddresses]);
 
   const handleDelete = async (addressId: number) => {
     if (!confirm("이 주소를 삭제하시겠습니까?")) return;
 
     try {
-      // deleteAddress 유틸 함수 사용
       await deleteAddress(addressId);
-      // 성공 시 목록에서 제거
-      setAddresses(addresses.filter((addr) => addr.addressId !== addressId));
+      const updatedAddresses = addresses.filter(
+        (addr) => addr.addressId !== addressId
+      );
+      updateAddressList(updatedAddresses);
       alert("주소 삭제 완료");
     } catch (error) {
       console.error("주소 삭제 실패:", error);
@@ -98,21 +63,7 @@ export default function AddressListModal({
 
     try {
       setIsSettingDefault(true);
-      // setDefaultAddress 유틸 함수 사용
       await setDefaultAddress(addressId);
-
-      // 주소 목록 갱신
-      await fetchAddresses();
-
-      // 새로운 기본 배송지 찾기
-      const newDefaultAddress = addresses.find(
-        (addr) => addr.addressId === addressId
-      );
-      if (newDefaultAddress) {
-        // 상위 컴포넌트에 알리기
-        onDefaultAddressChange(newDefaultAddress.road);
-      }
-
       alert("기본 배송지 설정 완료");
     } catch (error) {
       console.error("기본 배송지 설정 실패:", error);

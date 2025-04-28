@@ -97,8 +97,6 @@ export async function updateAddress(addressId: number, address: Address) {
     if (!response.ok) {
       throw new Error("주소지 수정에 실패했습니다.");
     }
-
-    return response.json();
   } catch (error) {
     console.error("주소지 수정 오류:", error);
     throw new Error("주소지 수정에 실패했습니다.");

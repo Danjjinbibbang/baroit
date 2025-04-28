@@ -6,31 +6,35 @@ import { MapPin, Search, ShoppingBag, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import AddressListModal from "../address/AddressListModal";
 import { useAuthStore, checkIsAuthenticated } from "@/zustand/auth";
+import { useAddressStore } from "@/zustand/address";
 
 export default function Header() {
   const [isAddressModalOpen, setIsAddressModalOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const { requireAuth, user, isAuthenticated } = useAuthStore();
   const [isLoading, setIsLoading] = useState(true);
-  const [defaultAddress, setDefaultAddress] = useState("배송지를 선택하세요");
 
-  // 페이지 로드 시 인증 상태 확인
+  // Zustand에서 기본 주소 정보 가져오기
+  const { defaultAddress, fetchAddresses } = useAddressStore();
+
+  // 페이지 로드 시 인증 상태 확인 및 주소 정보 불러오기
   useEffect(() => {
     // 세션/쿠키 기반 인증 상태 확인
     const authStatus = checkIsAuthenticated();
     console.log("인증 상태 확인:", authStatus, user);
+
+    // 인증된 사용자면 주소 정보 불러오기
+    if (authStatus) {
+      fetchAddresses();
+    }
+
     setIsLoading(false);
-  }, []);
+  }, [fetchAddresses]);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     console.log("검색어:", searchQuery);
     // 검색 로직 구현
-  };
-
-  // 주소 변경 핸들러 추가
-  const handleDefaultAddressChange = (road: string) => {
-    setDefaultAddress(road);
   };
 
   // 주소 아이콘 클릭 핸들러
@@ -81,7 +85,7 @@ export default function Header() {
             <img className="w-30" src="/baroit.png" />
           </Link>
 
-          {/* 현재 위치 */}
+          {/* 현재 위치 - Zustand에서 가져온 defaultAddress 사용 */}
           <button
             className="flex items-center text-sm ml-4 hover:text-blue-500"
             onClick={handleAddressClick}
@@ -131,8 +135,7 @@ export default function Header() {
         <AddressListModal
           isOpen={isAddressModalOpen}
           onClose={() => setIsAddressModalOpen(false)}
-          customerId={user?.id ? parseInt(user.id) : 0} // 실제 사용자 ID 활용
-          onDefaultAddressChange={handleDefaultAddressChange}
+          customerId={user?.id ? parseInt(user.id) : 0}
         />
       )}
     </div>
