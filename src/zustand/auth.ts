@@ -43,6 +43,7 @@ export const useAuthStore = create<AuthState>()(
         // 로그아웃 시 로컬 스토리지에서도 제거
         if (typeof window !== "undefined") {
           localStorage.removeItem("auth-storage");
+          localStorage.removeItem("address-storage"); // 기본 배송지 상태 값
         }
         set({
           user: null,
