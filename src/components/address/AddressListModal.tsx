@@ -21,12 +21,14 @@ interface AddressListModalProps {
   isOpen: boolean;
   onClose: () => void;
   customerId: number;
+  onDefaultAddressChange: (road: string) => void; // 콜백 함수 추가
 }
 
 export default function AddressListModal({
   isOpen,
   onClose,
   customerId,
+  onDefaultAddressChange,
 }: AddressListModalProps) {
   const [addresses, setAddresses] = useState<Address[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -47,15 +49,26 @@ export default function AddressListModal({
       const response = await getAddresses();
       console.log("주소 API 응답:", response);
 
+      let addressList: Address[] = [];
+
       // response.data.addresses 구조 처리
       if (response && response.data && Array.isArray(response.data.addresses)) {
-        setAddresses(response.data.addresses);
+        addressList = response.data.addresses;
       } else if (response && Array.isArray(response)) {
         // 혹시 배열로 바로 응답이 오는 경우도 처리
-        setAddresses(response);
+        addressList = response;
       } else {
         console.error("예상치 못한 API 응답 형식:", response);
-        setAddresses([]);
+        addressList = [];
+      }
+
+      setAddresses(addressList);
+
+      // 기본 배송지 찾기
+      const defaultAddress = addressList.find((addr) => addr.isDefault);
+      if (defaultAddress) {
+        // 상위 컴포넌트에 알리기
+        onDefaultAddressChange(defaultAddress.road);
       }
     } catch (error) {
       console.error("주소 목록 조회 실패:", error);
@@ -89,7 +102,16 @@ export default function AddressListModal({
       await setDefaultAddress(addressId);
 
       // 주소 목록 갱신
-      fetchAddresses();
+      await fetchAddresses();
+
+      // 새로운 기본 배송지 찾기
+      const newDefaultAddress = addresses.find(
+        (addr) => addr.addressId === addressId
+      );
+      if (newDefaultAddress) {
+        // 상위 컴포넌트에 알리기
+        onDefaultAddressChange(newDefaultAddress.road);
+      }
 
       alert("기본 배송지 설정 완료");
     } catch (error) {

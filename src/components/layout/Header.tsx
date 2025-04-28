@@ -12,6 +12,7 @@ export default function Header() {
   const [searchQuery, setSearchQuery] = useState("");
   const { requireAuth, user, isAuthenticated } = useAuthStore();
   const [isLoading, setIsLoading] = useState(true);
+  const [defaultAddress, setDefaultAddress] = useState("배송지를 선택하세요");
 
   // 페이지 로드 시 인증 상태 확인
   useEffect(() => {
@@ -25,6 +26,11 @@ export default function Header() {
     e.preventDefault();
     console.log("검색어:", searchQuery);
     // 검색 로직 구현
+  };
+
+  // 주소 변경 핸들러 추가
+  const handleDefaultAddressChange = (road: string) => {
+    setDefaultAddress(road);
   };
 
   // 주소 아이콘 클릭 핸들러
@@ -81,9 +87,7 @@ export default function Header() {
             onClick={handleAddressClick}
           >
             <MapPin size={16} className="mr-1" />
-            <span className="truncate max-w-[150px]">{
-              /*currentAddress*/ `서울시 강남구`
-            }</span>
+            <span className="truncate max-w-[150px]">{defaultAddress}</span>
           </button>
 
           {/* 검색창 */}
@@ -128,6 +132,7 @@ export default function Header() {
           isOpen={isAddressModalOpen}
           onClose={() => setIsAddressModalOpen(false)}
           customerId={user?.id ? parseInt(user.id) : 0} // 실제 사용자 ID 활용
+          onDefaultAddressChange={handleDefaultAddressChange}
         />
       )}
     </div>

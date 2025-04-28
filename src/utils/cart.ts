@@ -1,5 +1,5 @@
 import { CartItem, StoreCartGroupType, AddToCartItem } from "@/types/cart";
-import { checkIsAuthenticated } from "@/zustand/auth";
+import { checkIsAuthenticated, useAuthStore } from "@/zustand/auth";
 
 // 장바구니 항목을 스토어별로 그룹화하는 함수
 export function groupCartItemsByStore(
@@ -187,6 +187,12 @@ export async function getStoreCart(
         credentials: "include",
       }
     );
+    if (response.status === 401) {
+      console.log("401 발생, 세션 만료");
+      useAuthStore.getState().logout();
+      window.location.href = "/login";
+      throw new Error("세션 만료");
+    }
     return response.json();
   } catch (error) {
     console.error("가게 장바구니 조회 실패:", error);
