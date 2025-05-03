@@ -25,6 +25,7 @@ export interface Product {
   minPurchaseQuantity?: number; // UI 표시 용도
   maxPurchaseQuantity?: number; // UI 표시 용도
   unit?: string; // UI 표시 용도
+  category?: string;
 }
 
 // 상품 타입 정의
