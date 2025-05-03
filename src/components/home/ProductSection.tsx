@@ -11,8 +11,8 @@ const products = [
     price: 8900,
     discountRate: 10,
     image: "/products/product1.jpg",
-    rating: 4.8,
-    reviewCount: 120,
+    // rating: 4.8,
+    // reviewCount: 120,
   },
   {
     id: 2,
@@ -20,8 +20,6 @@ const products = [
     price: 7500,
     discountRate: 0,
     image: "/products/product2.jpg",
-    rating: 4.5,
-    reviewCount: 85,
   },
   {
     id: 3,
@@ -29,8 +27,6 @@ const products = [
     price: 25000,
     discountRate: 15,
     image: "/products/product3.jpg",
-    rating: 4.9,
-    reviewCount: 230,
   },
   {
     id: 4,
@@ -38,8 +34,6 @@ const products = [
     price: 6500,
     discountRate: 5,
     image: "/products/product4.jpg",
-    rating: 4.6,
-    reviewCount: 95,
   },
   {
     id: 5,
@@ -47,8 +41,6 @@ const products = [
     price: 4500,
     discountRate: 0,
     image: "/products/product5.jpg",
-    rating: 4.7,
-    reviewCount: 150,
   },
   {
     id: 6,
@@ -56,8 +48,6 @@ const products = [
     price: 18000,
     discountRate: 8,
     image: "/products/product6.jpg",
-    rating: 4.4,
-    reviewCount: 78,
   },
   {
     id: 7,
@@ -65,8 +55,6 @@ const products = [
     price: 35000,
     discountRate: 5,
     image: "/products/product7.jpg",
-    rating: 4.9,
-    reviewCount: 210,
   },
   {
     id: 8,
@@ -74,8 +62,6 @@ const products = [
     price: 15000,
     discountRate: 10,
     image: "/products/product8.jpg",
-    rating: 4.7,
-    reviewCount: 180,
   },
 ];
 
@@ -158,14 +144,14 @@ export default function ProductSection() {
                 )}
               </div>
 
-              <div className="flex items-center mt-1 text-xs text-gray-500">
+              {/* <div className="flex items-center mt-1 text-xs text-gray-500">
                 <span className="flex items-center">
                   <span className="text-yellow-400">★</span>
                   <span className="ml-1">{product.rating}</span>
                 </span>
                 <span className="mx-1">·</span>
                 <span>리뷰 {product.reviewCount}</span>
-              </div>
+              </div> */}
             </div>
           </Link>
         ))}

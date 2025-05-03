@@ -184,7 +184,7 @@ export default function AddressFormModal({
       }
 
       const data = await response.json();
-
+      console.log("주소 정보:", data);
       if (data.documents && data.documents.length > 0) {
         const addressInfo = data.documents[0];
         let roadAddress = "";
@@ -192,6 +192,7 @@ export default function AddressFormModal({
         const latitude = location.lat;
         const longitude = location.lng;
 
+        // 현재 위치로 설정 -> road_address null임
         if (addressInfo.road_address) {
           roadAddress = addressInfo.road_address.address_name;
         }

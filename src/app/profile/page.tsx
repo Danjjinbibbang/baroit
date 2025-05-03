@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { getCustomerProfile, changeNickname } from "@/utils/auth";
+import { getCustomerProfile, changeNickname, Postlogout } from "@/utils/auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -130,10 +130,16 @@ export default function ProfilePage() {
     );
   }
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
     const confirmed = window.confirm("정말 로그아웃하시겠습니까?");
     if (confirmed) {
-      logout(); // zustand에 있는 로그아웃
+      try {
+        await Postlogout(); // 로그아웃
+      } catch (error) {
+        console.log("로그아웃 실패: ", error);
+      }
+
+      logout(); // zustand에 있는 로그아웃 -> 로컬 스토리지에서 삭제
       window.location.href = "/"; // 홈으로 이동
     }
   };

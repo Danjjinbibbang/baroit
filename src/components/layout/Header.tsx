@@ -6,6 +6,7 @@ import { MapPin, Search, ShoppingBag, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import AddressListModal from "../address/AddressListModal";
 import { useAuthStore, checkIsAuthenticated } from "@/zustand/auth";
+import { useAddressStore } from "@/zustand/address";
 
 export default function Header() {
   const [isAddressModalOpen, setIsAddressModalOpen] = useState(false);
@@ -13,13 +14,22 @@ export default function Header() {
   const { requireAuth, user, isAuthenticated } = useAuthStore();
   const [isLoading, setIsLoading] = useState(true);
 
-  // 페이지 로드 시 인증 상태 확인
+  // Zustand에서 기본 주소 정보 가져오기
+  const { defaultAddress, fetchAddresses } = useAddressStore();
+
+  // 페이지 로드 시 인증 상태 확인 및 주소 정보 불러오기
   useEffect(() => {
     // 세션/쿠키 기반 인증 상태 확인
     const authStatus = checkIsAuthenticated();
     console.log("인증 상태 확인:", authStatus, user);
+
+    // 인증된 사용자면 주소 정보 불러오기
+    if (authStatus) {
+      fetchAddresses();
+    }
+
     setIsLoading(false);
-  }, []);
+  }, [fetchAddresses]);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -75,15 +85,13 @@ export default function Header() {
             <img className="w-30" src="/baroit.png" />
           </Link>
 
-          {/* 현재 위치 */}
+          {/* 현재 위치 - Zustand에서 가져온 defaultAddress 사용 */}
           <button
             className="flex items-center text-sm ml-4 hover:text-blue-500"
             onClick={handleAddressClick}
           >
             <MapPin size={16} className="mr-1" />
-            <span className="truncate max-w-[150px]">{
-              /*currentAddress*/ `서울시 강남구`
-            }</span>
+            <span className="truncate max-w-[150px]">{defaultAddress}</span>
           </button>
 
           {/* 검색창 */}
@@ -127,7 +135,7 @@ export default function Header() {
         <AddressListModal
           isOpen={isAddressModalOpen}
           onClose={() => setIsAddressModalOpen(false)}
-          customerId={user?.id ? parseInt(user.id) : 0} // 실제 사용자 ID 활용
+          customerId={user?.id ? parseInt(user.id) : 0}
         />
       )}
     </div>

@@ -1,5 +1,7 @@
 //import { Address } from "@/types/address";
 
+import { useAuthStore } from "@/zustand/auth";
+
 interface Address {
   detailed: string;
   alias: string;
@@ -45,6 +47,12 @@ export async function getAddresses() {
     }
   );
 
+  if (response.status === 401) {
+    console.log("401 발생, 세션 만료");
+    useAuthStore.getState().logout();
+    window.location.href = "/login";
+    throw new Error("세션 만료");
+  }
   if (!response.ok) {
     throw new Error("주소지 목록 조회에 실패했습니다.");
   }
@@ -73,23 +81,26 @@ export async function getAddress(addressId: number) {
 
 // 고객 주소지 수정
 export async function updateAddress(addressId: number, address: Address) {
-  const response = await fetch(
-    `${process.env.NEXT_PUBLIC_API_URL}/api/users/customers/addresses/${addressId}`,
-    {
-      method: "PUT",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(address),
-      credentials: "include",
-    }
-  );
+  try {
+    const response = await fetch(
+      `${process.env.NEXT_PUBLIC_API_URL}/api/users/customers/addresses/${addressId}`,
+      {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(address),
+        credentials: "include",
+      }
+    );
 
-  if (!response.ok) {
+    if (!response.ok) {
+      throw new Error("주소지 수정에 실패했습니다.");
+    }
+  } catch (error) {
+    console.error("주소지 수정 오류:", error);
     throw new Error("주소지 수정에 실패했습니다.");
   }
-
-  return response.json();
 }
 
 // 고객 주소지 삭제
@@ -128,6 +139,4 @@ export async function setDefaultAddress(addressId: number) {
   if (!response.ok) {
     throw new Error("기본 주소지 설정에 실패했습니다.");
   }
-
-  return response.json();
 }
