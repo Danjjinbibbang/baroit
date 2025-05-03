@@ -217,7 +217,7 @@ export default function StoreFeaturedProducts({
                 <span className="text-gray-400">상품 이미지</span>
               </div>
 
-              {product.discountRate > 0 && (
+              {product.discountRate && product.discountRate > 0 && (
                 <div className="absolute top-2 left-2 bg-red-500 text-white text-xs font-bold px-2 py-1 rounded">
                   {product.discountRate}%
                 </div>
@@ -234,10 +234,10 @@ export default function StoreFeaturedProducts({
               </p>
 
               <div className="mt-1">
-                {product.discountRate > 0 ? (
+                {product.discountRate && product.discountRate > 0 ? (
                   <>
                     <span className="text-red-500 font-bold">
-                      {formatPrice(product.price)}원
+                      {formatPrice(product.sellingPrice)}원
                     </span>
                     <span className="text-gray-400 text-xs line-through ml-1">
                       {formatPrice(product.originalPrice || 0)}원
@@ -245,7 +245,7 @@ export default function StoreFeaturedProducts({
                   </>
                 ) : (
                   <span className="font-bold">
-                    {formatPrice(product.price)}원
+                    {formatPrice(product.sellingPrice)}원
                   </span>
                 )}
               </div>
