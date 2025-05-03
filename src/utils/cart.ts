@@ -37,9 +37,9 @@ export function groupCartItemsByStore(
     // CartItems 형식으로 변환
     const cartItems = items.map((item) => ({
       itemId: Number(item.id),
-      itemName: item.name,
+      itemName: item.name || "",
       itemType: "PRODUCT",
-      imageUrl: item.image,
+      imageUrl: item.image || "",
       originalPrice: item.price,
       sellingPrice: calculateDiscountPrice(item.price, item.discountRate),
       quantity: item.quantity,
@@ -206,13 +206,13 @@ export function checkLoginStatus(): boolean {
 }
 
 // 장바구니에 오래된 항목(30일)을 확인하고 필터링하는 함수
-export function filterExpiredCartItems(cartItems: CartItem[]): CartItem[] {
-  const now = new Date();
-  const thirtyDaysInMs = 30 * 24 * 60 * 60 * 1000;
+// export function filterExpiredCartItems(cartItems: CartItem[]): CartItem[] {
+//   const now = new Date();
+//   const thirtyDaysInMs = 30 * 24 * 60 * 60 * 1000;
 
-  return cartItems.filter((item) => {
-    const addedDate = new Date(item.addedAt);
-    const ageInMs = now.getTime() - addedDate.getTime();
-    return ageInMs < thirtyDaysInMs;
-  });
-}
+//   return cartItems.filter((item) => {
+//     const addedDate = new Date(item.addedAt);
+//     const ageInMs = now.getTime() - addedDate.getTime();
+//     return ageInMs < thirtyDaysInMs;
+//   });
+// }
